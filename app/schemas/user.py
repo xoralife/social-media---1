@@ -20,3 +20,9 @@ class UserResponse(BaseModel):
 class Token(BaseModel):
     access_token: str
     token_type: str = "bearer"
+
+class UserProfileResponse(BaseModel):
+    id: int
+    username: str
+    email: str
+    posts_count: int = 0

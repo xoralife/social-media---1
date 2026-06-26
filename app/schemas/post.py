@@ -13,3 +13,9 @@ class PostResponse(PostBase):
     id: int
     user_id: int
     model_config = ConfigDict(from_attributes=True)
+
+class PostDetailResponse(PostResponse):
+    username: str = ""
+    like_count: int = 0
+    comment_count: int = 0
+    is_liked: bool = False

@@ -43,6 +43,15 @@ export const api = {
   getPosts: (token: string) =>
     request("/user/post/list", { headers: { Authorization: `Bearer ${token}` } }),
 
+  getComments: (postId: number, token: string) =>
+    request(`/user/post/${postId}/comments`, { headers: { Authorization: `Bearer ${token}` } }),
+
+  getProfile: (token: string) =>
+    request("/user/profile/me", { headers: { Authorization: `Bearer ${token}` } }),
+
+  getUserProfile: (userId: number, token: string) =>
+    request(`/user/profile/${userId}`, { headers: { Authorization: `Bearer ${token}` } }),
+
   adminLogin: (data: { username: string; password: string }) =>
     request("/admin/login", { method: "POST", body: JSON.stringify(data) }),
 
