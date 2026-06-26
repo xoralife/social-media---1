@@ -10,7 +10,6 @@ class User(Base):
     email = Column(String(255), unique=True, nullable=False, index=True)
     password = Column(Text, nullable=False)
 
-    # Relationships
     posts = relationship("Post", back_populates="user", cascade="all, delete-orphan")
     likes = relationship("Like", back_populates="user", cascade="all, delete-orphan")
     comments = relationship("Comment", back_populates="user", cascade="all, delete-orphan")

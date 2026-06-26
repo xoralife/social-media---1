@@ -9,11 +9,6 @@ class Like(Base):
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     post_id = Column(Integer, ForeignKey("posts.id", ondelete="CASCADE"), nullable=False)
 
-    # Unique constraint to prevent duplicate likes
-    __table_args__ = (
-        UniqueConstraint("user_id", "post_id", name="uq_user_post_like"),
-    )
-
-    # Relationships
+    __table_args__ = (UniqueConstraint("user_id", "post_id", name="uq_user_post_like"),)
     user = relationship("User", back_populates="likes")
     post = relationship("Post", back_populates="likes")

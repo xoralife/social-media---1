@@ -10,6 +10,5 @@ class Comment(Base):
     post_id = Column(Integer, ForeignKey("posts.id", ondelete="CASCADE"), nullable=False)
     comment = Column(Text, nullable=False)
 
-    # Relationships
     user = relationship("User", back_populates="comments")
     post = relationship("Post", back_populates="comments")
