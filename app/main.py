@@ -17,7 +17,7 @@ async def lifespan(app: FastAPI):
         if not admin_exists:
             default_admin = Admin(
                 username="admin",
-                password=hash_password("adminpassword123"),
+                password=hash_password("admin123"),
                 full_name="Default Administrator"
             )
             db.add(default_admin)
