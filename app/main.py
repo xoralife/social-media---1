@@ -1,10 +1,12 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from app.database import engine, Base, SessionLocal
-from app.routers import user, post, admin
+from app.routers import user, post, admin, chat
 from app.models.admin import Admin
 from app.utils.security import hash_password
+import os
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -24,9 +26,13 @@ app = FastAPI(title="Instagram-style Backend API", version="1.0.0", lifespan=lif
 
 app.add_middleware(CORSMiddleware, allow_origins=["http://localhost:3000"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 
+os.makedirs("app/uploads", exist_ok=True)
+app.mount("/uploads", StaticFiles(directory="app/uploads"), name="uploads")
+
 app.include_router(user.router)
 app.include_router(post.router)
 app.include_router(admin.router)
+app.include_router(chat.router)
 
 @app.get("/")
 def root():

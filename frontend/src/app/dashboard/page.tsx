@@ -18,152 +18,112 @@ type Post = {
   is_liked: boolean
 }
 
-type Comment = {
-  id: number
-  user_id: number
-  post_id: number
-  comment: string
-}
-
-const categories = ["photo", "Clothes", "Painting", "Comic"]
-
 export default function Dashboard() {
   const { token, logout } = useAuth()
   const router = useRouter()
   const [posts, setPosts] = useState<Post[]>([])
-  const [comments, setComments] = useState<Record<number, Comment[]>>({})
-  const [commentInputs, setCommentInputs] = useState<Record<number, string>>({})
-  const [expandedPosts, setExpandedPosts] = useState<Record<number, boolean>>({})
-  const [activeCategory, setActiveCategory] = useState("photo")
+  const [searchQuery, setSearchQuery] = useState("")
+  const [searchResults, setSearchResults] = useState<Post[] | null>(null)
+  const [searching, setSearching] = useState(false)
 
   useEffect(() => {
     if (!token) return router.push("/login")
-    api.getPosts(token)
-      .then(setPosts)
-      .catch(() => setPosts([]))
+    api.getPosts(token).then(setPosts).catch(() => setPosts([]))
   }, [token, router])
 
-  const handleLike = async (postId: number) => {
-    if (!token) return
-    try {
-      await api.likePost(postId, token)
-      setPosts(prev => prev.map(p =>
-        p.id === postId ? { ...p, is_liked: true, like_count: p.like_count + 1 } : p
-      ))
-    } catch {}
-  }
-
-  const toggleComments = async (postId: number) => {
-    if (!token) return
-    if (expandedPosts[postId]) {
-      setExpandedPosts(prev => ({ ...prev, [postId]: false }))
+  const handleSearch = async () => {
+    if (!token || !searchQuery.trim()) {
+      setSearchResults(null)
       return
     }
+    setSearching(true)
     try {
-      const data = await api.getComments(postId, token)
-      setComments(prev => ({ ...prev, [postId]: data }))
-      setExpandedPosts(prev => ({ ...prev, [postId]: true }))
-    } catch {}
+      const results = await api.searchPosts(searchQuery, token)
+      setSearchResults(results)
+    } catch {
+      setSearchResults([])
+    } finally {
+      setSearching(false)
+    }
   }
 
-  const handleComment = async (postId: number) => {
-    if (!token || !commentInputs[postId]?.trim()) return
-    try {
-      await api.comment({ post_id: postId, comment: commentInputs[postId] }, token)
-      setCommentInputs(prev => ({ ...prev, [postId]: "" }))
-      const data = await api.getComments(postId, token)
-      setComments(prev => ({ ...prev, [postId]: data }))
-      setPosts(prev => prev.map(p =>
-        p.id === postId ? { ...p, comment_count: p.comment_count + 1 } : p
-      ))
-    } catch {}
-  }
+  const displayPosts = searchResults !== null ? searchResults : posts
 
   return (
     <div className="min-h-screen bg-surface">
-      <header className="bg-white">
+      <header className="bg-white border-b border-border">
         <div className="max-w-xl mx-auto px-4 h-12 flex items-center justify-between">
           <Link href="/" className="text-lg font-bold">SocialApp</Link>
-          <div className="flex items-center gap-4 text-sm">
+          <div className="flex items-center gap-3 text-sm">
             <Link href="/create-post">Create</Link>
             <Link href="/profile">Profile</Link>
+            <Link href="/chat">Chat</Link>
             <button onClick={() => { logout(); router.push("/") }} className="text-red-500">Logout</button>
           </div>
         </div>
       </header>
 
-      <div className="max-w-xl mx-auto px-0">
-        <div className="bg-white border-b border-border flex gap-1 px-4 py-3">
-          {categories.map(cat => (
-            <button key={cat}
-              onClick={() => setActiveCategory(cat)}
-              className={`px-3 py-1.5 text-xs font-medium rounded-full transition-colors ${
-                activeCategory === cat ? "bg-gray-900 text-white" : "bg-white text-gray-700 border border-border"
-              }`}
-            >
-              {cat}
+      <div className="max-w-xl mx-auto px-4 py-4">
+        <div className="flex gap-2 mb-4">
+          <input
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            onKeyDown={e => { if (e.key === "Enter") handleSearch() }}
+            placeholder="Search posts..."
+            className="flex-1 px-3 py-2 border border-border rounded-lg text-sm outline-none focus:border-gray-400"
+          />
+          <button onClick={handleSearch}
+            className="px-4 py-2 bg-black text-white rounded-lg text-sm font-semibold disabled:opacity-50"
+            disabled={searching}>
+            {searching ? "..." : "Search"}
+          </button>
+          {searchResults !== null && (
+            <button onClick={() => { setSearchResults(null); setSearchQuery("") }}
+              className="px-3 py-2 text-sm text-gray-500 hover:text-gray-700">
+              Clear
             </button>
-          ))}
+          )}
         </div>
+      </div>
 
-        <div className="pt-4 space-y-4 px-4">
-          {posts.length === 0 && <p className="text-gray-400 text-center py-12 text-sm">No posts yet.</p>}
-          {posts.map(post => (
-            <div key={post.id} className="bg-white rounded-2xl overflow-hidden shadow-sm border border-border">
-              <div className="flex items-center gap-3 px-4 py-3">
-                <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-xs font-semibold">
-                  {post.username.charAt(0).toUpperCase()}
-                </div>
-                <Link href={`/profile/${post.user_id}`} className="text-sm font-semibold">
-                  {post.username}
-                </Link>
+      <div className="max-w-xl mx-auto px-4 space-y-4 pb-8">
+        {searchResults !== null && searchResults.length === 0 && (
+          <p className="text-gray-400 text-center py-8 text-sm">No posts found.</p>
+        )}
+        {displayPosts.map(post => (
+          <div key={post.id} className="bg-white rounded-2xl overflow-hidden shadow-sm border border-border">
+            <div className="flex items-center gap-3 px-4 py-3">
+              <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-xs font-semibold">
+                {post.username.charAt(0).toUpperCase()}
               </div>
-              <img src={post.image_url} alt={post.title} className="w-full aspect-square object-cover" />
-              <div className="px-4 py-3 space-y-2">
-                <div className="flex items-center gap-4">
-                  <button onClick={() => handleLike(post.id)} className="text-lg">
-                    {post.is_liked ? "❤️" : "🤍"}
-                  </button>
-                  <button onClick={() => toggleComments(post.id)} className="text-lg">
-                    💬
-                  </button>
-                </div>
-                <p className="text-sm font-semibold">{post.like_count} likes</p>
-                <p className="text-sm">
-                  <Link href={`/profile/${post.user_id}`} className="font-semibold mr-1">{post.username}</Link>
-                  {post.caption || post.title}
-                </p>
-                {post.comment_count > 0 && (
-                  <button onClick={() => toggleComments(post.id)} className="text-sm text-gray-500">
-                    View all {post.comment_count} comments
-                  </button>
-                )}
-                {expandedPosts[post.id] && (
-                  <div className="pt-2 border-t border-border space-y-2">
-                    {comments[post.id]?.map(c => (
-                      <p key={c.id} className="text-sm">
-                        <span className="font-semibold">User #{c.user_id}</span> {c.comment}
-                      </p>
-                    ))}
-                    <div className="flex gap-2 pt-1">
-                      <input
-                        value={commentInputs[post.id] || ""}
-                        onChange={e => setCommentInputs(prev => ({ ...prev, [post.id]: e.target.value }))}
-                        placeholder="Add a comment..."
-                        className="flex-1 text-sm outline-none"
-                        onKeyDown={e => { if (e.key === "Enter") handleComment(post.id) }}
-                      />
-                      <button onClick={() => handleComment(post.id)}
-                        className="text-sm font-semibold text-accent hover:text-blue-600">
-                        Post
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
+              <Link href={`/profile/${post.user_id}`} className="text-sm font-semibold">{post.username}</Link>
             </div>
-          ))}
-        </div>
+            <Link href={`/post/${post.id}`}>
+              <img src={post.image_url} alt={post.title} className="w-full aspect-square object-cover" />
+            </Link>
+            <div className="px-4 py-3 space-y-2">
+              <div className="flex items-center gap-4">
+                <button onClick={() => {
+                  if (!token) return
+                  api.likePost(post.id, token).then(() => {
+                    setPosts(prev => prev.map(p => p.id === post.id ? { ...p, is_liked: true, like_count: p.like_count + 1 } : p))
+                  }).catch(() => {})
+                }} className="text-lg">
+                  {post.is_liked ? "❤️" : "🤍"}
+                </button>
+                <Link href={`/post/${post.id}`} className="text-lg">💬</Link>
+              </div>
+              <p className="text-sm font-semibold">{post.like_count} likes</p>
+              <p className="text-sm">
+                <Link href={`/profile/${post.user_id}`} className="font-semibold mr-1">{post.username}</Link>
+                {post.caption || post.title}
+              </p>
+              <Link href={`/post/${post.id}`} className="text-sm text-gray-500 block">
+                View all {post.comment_count} comments
+              </Link>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   )
