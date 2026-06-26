@@ -4,3 +4,8 @@ __pycache__/
 instagram.db
 node_modules/
 .next/
+.venv/
+uploads/
+*.pyc
+__pycache__/
+xd-export/
