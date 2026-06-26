@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
+import { api } from "@/lib/api"
 
 type User = { id: number; username: string; email: string }
 type Post = { id: number; user_id: number; title: string; caption?: string; image_url: string }
@@ -18,8 +19,8 @@ export default function AdminDashboard() {
   useEffect(() => {
     if (!token) return router.push("/admin/login")
     Promise.all([
-      fetch("http://localhost:8000/admin/users", { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()),
-      fetch("http://localhost:8000/admin/posts", { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json()),
+      api.adminUsers(token),
+      api.adminPosts(token),
     ])
       .then(([u, p]) => { setUsers(u); setPosts(p) })
       .catch(() => router.push("/admin/login"))

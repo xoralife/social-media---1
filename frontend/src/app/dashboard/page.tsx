@@ -15,12 +15,9 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (!token) return router.push("/login")
-    fetch("http://localhost:8000/admin/posts", {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then(r => r.json())
+    api.getPosts(token)
       .then(setPosts)
-      .catch(() => {})
+      .catch(() => setPosts([]))
   }, [token, router])
 
   return (

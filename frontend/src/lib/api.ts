@@ -2,8 +2,8 @@ const API = "http://localhost:8000"
 
 async function request(path: string, options: RequestInit = {}) {
   const res = await fetch(`${API}${path}`, {
-    headers: { "Content-Type": "application/json", ...options.headers },
     ...options,
+    headers: { "Content-Type": "application/json", ...(options.headers as Record<string, string>) },
   })
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: res.statusText }))
@@ -39,6 +39,9 @@ export const api = {
       body: JSON.stringify(data),
       headers: { Authorization: `Bearer ${token}` },
     }),
+
+  getPosts: (token: string) =>
+    request("/user/post/list", { headers: { Authorization: `Bearer ${token}` } }),
 
   adminLogin: (data: { username: string; password: string }) =>
     request("/admin/login", { method: "POST", body: JSON.stringify(data) }),
