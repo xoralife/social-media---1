@@ -25,6 +25,8 @@ type Comment = {
   comment: string
 }
 
+const categories = ["photo", "Clothes", "Painting", "Comic"]
+
 export default function Dashboard() {
   const { token, logout } = useAuth()
   const router = useRouter()
@@ -32,6 +34,7 @@ export default function Dashboard() {
   const [comments, setComments] = useState<Record<number, Comment[]>>({})
   const [commentInputs, setCommentInputs] = useState<Record<number, string>>({})
   const [expandedPosts, setExpandedPosts] = useState<Record<number, boolean>>({})
+  const [activeCategory, setActiveCategory] = useState("photo")
 
   useEffect(() => {
     if (!token) return router.push("/login")
@@ -78,72 +81,90 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-surface">
-      <header className="border-b border-border bg-white">
-        <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
-          <Link href="/" className="text-xl font-bold text-primary">SocialApp</Link>
-          <nav className="flex items-center gap-4">
-            <Link href="/create-post" className="text-sm font-medium hover:text-primary transition-colors">Create Post</Link>
-            <Link href="/profile" className="text-sm font-medium hover:text-primary transition-colors">Profile</Link>
-            <button onClick={() => { logout(); router.push("/") }} className="text-sm text-red-500 hover:text-red-600">Logout</button>
-          </nav>
+      <header className="bg-white">
+        <div className="max-w-xl mx-auto px-4 h-12 flex items-center justify-between">
+          <Link href="/" className="text-lg font-bold">SocialApp</Link>
+          <div className="flex items-center gap-4 text-sm">
+            <Link href="/create-post">Create</Link>
+            <Link href="/profile">Profile</Link>
+            <button onClick={() => { logout(); router.push("/") }} className="text-red-500">Logout</button>
+          </div>
         </div>
       </header>
 
-      <main className="max-w-2xl mx-auto px-4 py-8 space-y-6">
-        <h2 className="text-2xl font-bold">Your Feed</h2>
-        {posts.length === 0 && <p className="text-gray-400 text-center py-12">No posts yet. Create one!</p>}
-        {posts.map(post => (
-          <div key={post.id} className="bg-white rounded-2xl overflow-hidden shadow-sm border border-border">
-            <div className="p-4 pb-0 flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-sm font-semibold text-primary">
-                {post.username.charAt(0).toUpperCase()}
-              </div>
-              <Link href={`/profile/${post.user_id}`} className="text-sm font-medium hover:text-primary transition-colors">
-                {post.username}
-              </Link>
-            </div>
-            <img src={post.image_url} alt={post.title} className="w-full h-64 object-cover mt-3" />
-            <div className="p-4">
-              <h3 className="font-semibold text-lg">{post.title}</h3>
-              {post.caption && <p className="text-gray-500 text-sm mt-1">{post.caption}</p>}
-              <div className="flex items-center gap-4 mt-3 text-sm">
-                <button onClick={() => handleLike(post.id)}
-                  className={`flex items-center gap-1 font-medium transition-colors ${post.is_liked ? "text-red-500" : "text-gray-500 hover:text-red-500"}`}>
-                  {post.is_liked ? "❤️" : "🤍"} {post.like_count}
-                </button>
-                <button onClick={() => toggleComments(post.id)}
-                  className="flex items-center gap-1 text-gray-500 hover:text-primary font-medium transition-colors">
-                  💬 {post.comment_count}
-                </button>
-              </div>
-              {expandedPosts[post.id] && (
-                <div className="mt-4 border-t border-border pt-4 space-y-3">
-                  {comments[post.id]?.map(c => (
-                    <div key={c.id} className="text-sm">
-                      <span className="font-medium">User #{c.user_id}</span>
-                      <span className="text-gray-500">: {c.comment}</span>
-                    </div>
-                  ))}
-                  {comments[post.id]?.length === 0 && <p className="text-sm text-gray-400">No comments yet.</p>}
-                  <div className="flex gap-2">
-                    <input
-                      value={commentInputs[post.id] || ""}
-                      onChange={e => setCommentInputs(prev => ({ ...prev, [post.id]: e.target.value }))}
-                      placeholder="Write a comment..."
-                      className="flex-1 px-3 py-2 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                      onKeyDown={e => { if (e.key === "Enter") handleComment(post.id) }}
-                    />
-                    <button onClick={() => handleComment(post.id)}
-                      className="px-4 py-2 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary-hover transition-colors">
-                      Post
-                    </button>
-                  </div>
+      <div className="max-w-xl mx-auto px-0">
+        <div className="bg-white border-b border-border flex gap-1 px-4 py-3">
+          {categories.map(cat => (
+            <button key={cat}
+              onClick={() => setActiveCategory(cat)}
+              className={`px-3 py-1.5 text-xs font-medium rounded-full transition-colors ${
+                activeCategory === cat ? "bg-gray-900 text-white" : "bg-white text-gray-700 border border-border"
+              }`}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+
+        <div className="pt-4 space-y-4 px-4">
+          {posts.length === 0 && <p className="text-gray-400 text-center py-12 text-sm">No posts yet.</p>}
+          {posts.map(post => (
+            <div key={post.id} className="bg-white rounded-2xl overflow-hidden shadow-sm border border-border">
+              <div className="flex items-center gap-3 px-4 py-3">
+                <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-xs font-semibold">
+                  {post.username.charAt(0).toUpperCase()}
                 </div>
-              )}
+                <Link href={`/profile/${post.user_id}`} className="text-sm font-semibold">
+                  {post.username}
+                </Link>
+              </div>
+              <img src={post.image_url} alt={post.title} className="w-full aspect-square object-cover" />
+              <div className="px-4 py-3 space-y-2">
+                <div className="flex items-center gap-4">
+                  <button onClick={() => handleLike(post.id)} className="text-lg">
+                    {post.is_liked ? "❤️" : "🤍"}
+                  </button>
+                  <button onClick={() => toggleComments(post.id)} className="text-lg">
+                    💬
+                  </button>
+                </div>
+                <p className="text-sm font-semibold">{post.like_count} likes</p>
+                <p className="text-sm">
+                  <Link href={`/profile/${post.user_id}`} className="font-semibold mr-1">{post.username}</Link>
+                  {post.caption || post.title}
+                </p>
+                {post.comment_count > 0 && (
+                  <button onClick={() => toggleComments(post.id)} className="text-sm text-gray-500">
+                    View all {post.comment_count} comments
+                  </button>
+                )}
+                {expandedPosts[post.id] && (
+                  <div className="pt-2 border-t border-border space-y-2">
+                    {comments[post.id]?.map(c => (
+                      <p key={c.id} className="text-sm">
+                        <span className="font-semibold">User #{c.user_id}</span> {c.comment}
+                      </p>
+                    ))}
+                    <div className="flex gap-2 pt-1">
+                      <input
+                        value={commentInputs[post.id] || ""}
+                        onChange={e => setCommentInputs(prev => ({ ...prev, [post.id]: e.target.value }))}
+                        placeholder="Add a comment..."
+                        className="flex-1 text-sm outline-none"
+                        onKeyDown={e => { if (e.key === "Enter") handleComment(post.id) }}
+                      />
+                      <button onClick={() => handleComment(post.id)}
+                        className="text-sm font-semibold text-accent hover:text-blue-600">
+                        Post
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
-      </main>
+          ))}
+        </div>
+      </div>
     </div>
   )
 }

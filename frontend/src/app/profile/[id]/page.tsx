@@ -13,11 +13,19 @@ type Profile = {
   posts_count: number
 }
 
+type Post = {
+  id: number
+  user_id: number
+  image_url: string
+  title: string
+}
+
 export default function UserProfile() {
   const { token } = useAuth()
   const router = useRouter()
   const params = useParams()
   const [profile, setProfile] = useState<Profile | null>(null)
+  const [userPosts, setUserPosts] = useState<Post[]>([])
   const [error, setError] = useState("")
 
   useEffect(() => {
@@ -29,11 +37,18 @@ export default function UserProfile() {
       .catch(() => setError("User not found"))
   }, [token, router, params.id])
 
+  useEffect(() => {
+    if (!token || !profile) return
+    api.getPosts(token).then(all => {
+      setUserPosts(all.filter((p: Post) => p.user_id === profile.id))
+    }).catch(() => {})
+  }, [token, profile])
+
   if (error) return (
-    <div className="min-h-screen flex items-center justify-center bg-surface">
+    <div className="min-h-screen flex items-center justify-center bg-white">
       <div className="text-center">
         <p className="text-gray-500">{error}</p>
-        <Link href="/dashboard" className="text-primary text-sm mt-4 inline-block hover:underline">Back to Dashboard</Link>
+        <Link href="/dashboard" className="text-accent text-sm mt-4 inline-block">Back to Dashboard</Link>
       </div>
     </div>
   )
@@ -41,25 +56,48 @@ export default function UserProfile() {
   if (!profile) return null
 
   return (
-    <div className="min-h-screen bg-surface">
-      <header className="border-b border-border bg-white">
-        <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
-          <Link href="/" className="text-xl font-bold text-primary">SocialApp</Link>
-          <nav className="flex items-center gap-4">
-            <Link href="/dashboard" className="text-sm font-medium hover:text-primary transition-colors">Dashboard</Link>
+    <div className="min-h-screen bg-white">
+      <header className="border-b border-border">
+        <div className="max-w-xl mx-auto px-4 h-12 flex items-center justify-between">
+          <Link href="/" className="text-lg font-bold">SocialApp</Link>
+          <nav className="flex items-center gap-4 text-sm">
+            <Link href="/dashboard">Dashboard</Link>
           </nav>
         </div>
       </header>
 
-      <main className="max-w-lg mx-auto px-4 py-12">
-        <div className="bg-white rounded-2xl shadow-sm border border-border p-8 text-center">
-          <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center text-3xl font-bold text-primary mx-auto">
+      <main className="max-w-xl mx-auto px-4 py-8">
+        <div className="flex items-center gap-6 mb-6">
+          <div className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center text-3xl font-light">
             {profile.username.charAt(0).toUpperCase()}
           </div>
-          <h2 className="text-2xl font-bold mt-4">{profile.username}</h2>
-          <p className="text-sm text-gray-500 mt-4">
-            <span className="font-semibold text-gray-900">{profile.posts_count}</span> posts
-          </p>
+          <div className="flex-1">
+            <h2 className="text-xl font-semibold">{profile.username}</h2>
+            <div className="flex gap-6 mt-3 text-sm">
+              <span><strong>{profile.posts_count}</strong> posts</span>
+              <span><strong>0</strong> followers</span>
+              <span><strong>0</strong> following</span>
+            </div>
+          </div>
+        </div>
+
+        <p className="text-sm mb-4">I am A penter</p>
+
+        <div className="flex gap-2 mb-6">
+          <button className="flex-1 py-1.5 text-sm font-semibold bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
+            follow
+          </button>
+          <button className="flex-1 py-1.5 text-sm font-semibold bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
+            message
+          </button>
+        </div>
+
+        <div className="grid grid-cols-3 gap-1">
+          {userPosts.map(post => (
+            <div key={post.id} className="aspect-square bg-gray-100 overflow-hidden">
+              <img src={post.image_url} alt={post.title} className="w-full h-full object-cover" />
+            </div>
+          ))}
         </div>
       </main>
     </div>
