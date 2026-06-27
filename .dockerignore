@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+instagram.db
+node_modules/
+.next/
+.venv/
+uploads/
+frontend/
