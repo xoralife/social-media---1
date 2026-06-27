@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { api } from "@/lib/api"
+import { api, getImageUrl } from "@/lib/api"
 import { useAuth } from "@/context/AuthContext"
 
 type Post = {
@@ -13,6 +13,7 @@ type Post = {
   caption?: string
   image_url: string
   username: string
+  profile_pic?: string | null
   like_count: number
   comment_count: number
   is_liked: boolean
@@ -22,6 +23,7 @@ export default function Dashboard() {
   const { token, logout } = useAuth()
   const router = useRouter()
   const [posts, setPosts] = useState<Post[]>([])
+  const [myId, setMyId] = useState<number | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [searchResults, setSearchResults] = useState<Post[] | null>(null)
   const [searching, setSearching] = useState(false)
@@ -29,6 +31,7 @@ export default function Dashboard() {
   useEffect(() => {
     if (!token) return router.push("/login")
     api.getPosts(token).then(setPosts).catch(() => setPosts([]))
+    api.getProfile(token).then(p => setMyId(p.id)).catch(() => {})
   }, [token, router])
 
   const handleSearch = async () => {
@@ -45,6 +48,15 @@ export default function Dashboard() {
     } finally {
       setSearching(false)
     }
+  }
+
+  const handleDelete = async (postId: number) => {
+    if (!token) return
+    try {
+      await api.deletePost(postId, token)
+      setPosts(prev => prev.filter(p => p.id !== postId))
+      if (searchResults) setSearchResults(prev => prev ? prev.filter(p => p.id !== postId) : prev)
+    } catch {}
   }
 
   const displayPosts = searchResults !== null ? searchResults : posts
@@ -92,14 +104,26 @@ export default function Dashboard() {
         )}
         {displayPosts.map(post => (
           <div key={post.id} className="bg-white rounded-2xl overflow-hidden shadow-sm border border-border">
-            <div className="flex items-center gap-3 px-4 py-3">
-              <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-xs font-semibold">
-                {post.username.charAt(0).toUpperCase()}
+            <div className="flex items-center justify-between px-4 py-3">
+              <div className="flex items-center gap-3">
+                {post.profile_pic ? (
+                  <img src={getImageUrl(post.profile_pic)} alt="" className="w-8 h-8 rounded-full object-cover" />
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-xs font-semibold">
+                    {post.username.charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <Link href={`/profile/${post.user_id}`} className="text-sm font-semibold">{post.username}</Link>
               </div>
-              <Link href={`/profile/${post.user_id}`} className="text-sm font-semibold">{post.username}</Link>
+              {myId === post.user_id && (
+                <button onClick={() => handleDelete(post.id)}
+                  className="text-sm text-red-500 hover:text-red-700 font-semibold">
+                  Delete
+                </button>
+              )}
             </div>
             <Link href={`/post/${post.id}`}>
-              <img src={post.image_url} alt={post.title} className="w-full aspect-square object-cover" />
+              <img src={getImageUrl(post.image_url)} alt={post.title} className="w-full aspect-square object-cover" />
             </Link>
             <div className="px-4 py-3 space-y-2">
               <div className="flex items-center gap-4">

@@ -16,6 +16,7 @@ class PostResponse(PostBase):
 
 class PostDetailResponse(PostResponse):
     username: str = ""
+    profile_pic: Optional[str] = None
     like_count: int = 0
     comment_count: int = 0
     is_liked: bool = False

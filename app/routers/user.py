@@ -8,6 +8,7 @@ from app.dependencies import get_current_user
 from app.models.user import User
 from app.models.post import Post
 from app.models.follow import Follow
+from app.models.message import Message
 from app.schemas.user import UserCreate, UserLogin, UserResponse, Token, UserProfileResponse
 from app.services.user_service import UserService
 from app.services.auth_service import AuthService
@@ -110,3 +111,10 @@ def unfollow_user(user_id: int, db: Session = Depends(get_db_session), current_u
     db.delete(existing)
     db.commit()
     return {"message": "Unfollowed successfully"}
+
+@router.delete("/account")
+def delete_account(db: Session = Depends(get_db_session), current_user: User = Depends(get_current_user)):
+    db.query(Message).filter((Message.sender_id == current_user.id) | (Message.receiver_id == current_user.id)).delete()
+    db.delete(current_user)
+    db.commit()
+    return {"message": "Account deleted successfully"}

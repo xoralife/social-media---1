@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { useRouter, useParams } from "next/navigation"
 import Link from "next/link"
-import { api } from "@/lib/api"
+import { api, getImageUrl } from "@/lib/api"
 import { useAuth } from "@/context/AuthContext"
 
 type Profile = {
@@ -74,7 +74,7 @@ export default function UserProfile() {
         <div className="max-w-xl mx-auto px-4 h-12 flex items-center justify-between">
           <Link href="/" className="text-lg font-bold">SocialApp</Link>
           <nav className="flex items-center gap-3 text-sm">
-            <Link href="/dashboard">Dashboard</Link>
+            <Link href="/">Home</Link>
             <Link href="/chat">Chat</Link>
           </nav>
         </div>
@@ -83,7 +83,7 @@ export default function UserProfile() {
       <main className="max-w-xl mx-auto px-4 py-8">
         <div className="flex items-center gap-6 mb-6">
           {profile.profile_pic ? (
-            <img src={profile.profile_pic} className="w-20 h-20 rounded-full object-cover" />
+            <img src={getImageUrl(profile.profile_pic)} className="w-20 h-20 rounded-full object-cover" />
           ) : (
             <div className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center text-3xl font-light">
               {profile.username.charAt(0).toUpperCase()}
@@ -119,7 +119,7 @@ export default function UserProfile() {
         <div className="grid grid-cols-3 gap-1">
           {userPosts.map(post => (
             <Link key={post.id} href={`/post/${post.id}`} className="aspect-square bg-gray-100 overflow-hidden">
-              <img src={post.image_url} alt={post.title} className="w-full h-full object-cover" />
+              <img src={getImageUrl(post.image_url)} alt={post.title} className="w-full h-full object-cover" />
             </Link>
           ))}
         </div>

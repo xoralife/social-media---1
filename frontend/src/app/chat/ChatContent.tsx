@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
-import { api } from "@/lib/api"
+import { api, getImageUrl } from "@/lib/api"
 import { useAuth } from "@/context/AuthContext"
 
 type Conversation = {
@@ -92,10 +92,19 @@ export default function ChatContent() {
               className={`w-full text-left px-3 py-3 text-sm hover:bg-gray-50 transition-colors ${
                 selectedUser?.id === c.user_id ? "bg-gray-50" : ""
               }`}>
-              <div className="font-semibold">{c.username}</div>
-              <div className="text-gray-500 text-xs truncate">{c.last_message}</div>
+              <div className="flex items-center gap-2">
+                {c.profile_pic ? (
+                  <img src={getImageUrl(c.profile_pic)} alt="" className="w-7 h-7 rounded-full object-cover" />
+                ) : (
+                  <div className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center text-xs font-semibold shrink-0">
+                    {c.username.charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <div className="font-semibold">{c.username}</div>
+              </div>
+              <div className="text-gray-500 text-xs truncate pl-9">{c.last_message}</div>
               {c.unread_count > 0 && (
-                <span className="text-xs text-accent font-semibold">{c.unread_count} unread</span>
+                <span className="text-xs text-accent font-semibold pl-9">{c.unread_count} unread</span>
               )}
             </button>
           ))}

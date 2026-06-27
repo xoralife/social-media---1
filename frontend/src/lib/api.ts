@@ -1,5 +1,11 @@
 const API = "http://localhost:8000"
 
+export function getImageUrl(url: string): string {
+  if (!url) return ""
+  if (url.startsWith("http://") || url.startsWith("https://")) return url
+  return `${API}${url}`
+}
+
 async function request(path: string, options: RequestInit = {}) {
   const res = await fetch(`${API}${path}`, {
     ...options,
@@ -104,6 +110,18 @@ export const api = {
 
   getConversations: (token: string) =>
     request("/chat/conversations", { headers: { Authorization: `Bearer ${token}` } }),
+
+  deletePost: (postId: number, token: string) =>
+    request(`/user/post/${postId}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    }),
+
+  deleteAccount: (token: string) =>
+    request("/user/account", {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    }),
 
   getUnreadCount: (token: string) =>
     request("/chat/unread-count", { headers: { Authorization: `Bearer ${token}` } }),

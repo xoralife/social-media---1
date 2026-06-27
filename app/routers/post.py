@@ -41,6 +41,7 @@ def list_posts(limit: int = Query(10, ge=1, le=100), offset: int = Query(0, ge=0
             caption=p.caption,
             image_url=p.image_url,
             username=p.user.username if p.user else "unknown",
+            profile_pic=p.user.profile_pic if p.user else None,
             like_count=like_counts.get(p.id, 0),
             comment_count=comment_counts.get(p.id, 0),
             is_liked=p.id in user_likes,
@@ -65,6 +66,7 @@ def search_posts(q: str = Query("", min_length=1), limit: int = Query(20, ge=1, 
             caption=p.caption,
             image_url=p.image_url,
             username=p.user.username if p.user else "unknown",
+            profile_pic=p.user.profile_pic if p.user else None,
             like_count=like_counts.get(p.id, 0),
             comment_count=comment_counts.get(p.id, 0),
             is_liked=p.id in user_likes,
@@ -90,6 +92,17 @@ def get_comments(post_id: int, db: Session = Depends(get_db_session), current_us
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Post not found")
     return db.query(Comment).filter(Comment.post_id == post_id).order_by(Comment.id.desc()).all()
 
+@router.delete("/{post_id}")
+def delete_post(post_id: int, db: Session = Depends(get_db_session), current_user: User = Depends(get_current_user)):
+    post = db.query(Post).filter(Post.id == post_id).first()
+    if not post:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Post not found")
+    if post.user_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You can only delete your own posts")
+    db.delete(post)
+    db.commit()
+    return {"message": "Post deleted successfully"}
+
 @router.get("/{post_id}", response_model=PostDetailResponse)
 def get_post(post_id: int, db: Session = Depends(get_db_session), current_user: User = Depends(get_current_user)):
     post = db.query(Post).filter(Post.id == post_id).first()
@@ -105,6 +118,7 @@ def get_post(post_id: int, db: Session = Depends(get_db_session), current_user: 
         caption=post.caption,
         image_url=post.image_url,
         username=post.user.username if post.user else "unknown",
+        profile_pic=post.user.profile_pic if post.user else None,
         like_count=like_count,
         comment_count=comment_count,
         is_liked=is_liked,

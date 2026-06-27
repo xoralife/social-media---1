@@ -42,7 +42,7 @@ export default function CreatePost() {
       }
       if (!url) { setError("Please select an image or enter a URL"); setLoading(false); return }
       await api.createPost({ title: form.title, caption: form.caption, image_url: url }, token)
-      router.push("/dashboard")
+      router.push("/")
     } catch (err: any) {
       setError(err.message)
     } finally {

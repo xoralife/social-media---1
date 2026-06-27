@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { useRouter, useParams } from "next/navigation"
 import Link from "next/link"
-import { api } from "@/lib/api"
+import { api, getImageUrl } from "@/lib/api"
 import { useAuth } from "@/context/AuthContext"
 
 type Post = {
@@ -13,6 +13,7 @@ type Post = {
   caption?: string
   image_url: string
   username: string
+  profile_pic?: string | null
   like_count: number
   comment_count: number
   is_liked: boolean
@@ -33,6 +34,7 @@ export default function PostDetail() {
   const [comments, setComments] = useState<Comment[]>([])
   const [commentInput, setCommentInput] = useState("")
   const [error, setError] = useState("")
+  const [myId, setMyId] = useState<number | null>(null)
 
   useEffect(() => {
     if (!token) return router.push("/login")
@@ -40,6 +42,7 @@ export default function PostDetail() {
     if (!pid) { setError("Invalid post"); return }
     api.getPost(pid, token).then(setPost).catch(() => setError("Post not found"))
     api.getComments(pid, token).then(setComments).catch(() => {})
+    api.getProfile(token).then(p => setMyId(p.id)).catch(() => {})
   }, [token, router, params.id])
 
   const handleLike = async () => {
@@ -61,6 +64,14 @@ export default function PostDetail() {
     } catch {}
   }
 
+  const handleDelete = async () => {
+    if (!token || !post) return
+    try {
+      await api.deletePost(post.id, token)
+      router.push("/")
+    } catch {}
+  }
+
   if (error) return (
     <div className="min-h-screen flex items-center justify-center bg-white">
       <p className="text-gray-500">{error}</p>
@@ -74,19 +85,31 @@ export default function PostDetail() {
       <header className="bg-white border-b border-border">
         <div className="max-w-xl mx-auto px-4 h-12 flex items-center justify-between">
           <Link href="/" className="text-lg font-bold">SocialApp</Link>
-          <Link href="/dashboard" className="text-sm">Back</Link>
+          <Link href="/" className="text-sm">Back</Link>
         </div>
       </header>
 
       <div className="max-w-xl mx-auto px-4 py-8">
         <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-border">
-          <div className="flex items-center gap-3 px-4 py-3">
-            <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-xs font-semibold">
-              {post.username.charAt(0).toUpperCase()}
-            </div>
-            <Link href={`/profile/${post.user_id}`} className="text-sm font-semibold">{post.username}</Link>
+          <div className="flex items-center justify-between px-4 py-3">
+              <div className="flex items-center gap-3">
+                {post.profile_pic ? (
+                  <img src={getImageUrl(post.profile_pic)} alt="" className="w-8 h-8 rounded-full object-cover" />
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-xs font-semibold">
+                    {post.username.charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <Link href={`/profile/${post.user_id}`} className="text-sm font-semibold">{post.username}</Link>
+              </div>
+            {myId === post.user_id && (
+              <button onClick={handleDelete}
+                className="text-sm text-red-500 hover:text-red-700 font-semibold">
+                Delete
+              </button>
+            )}
           </div>
-          <img src={post.image_url} alt={post.title} className="w-full aspect-square object-cover" />
+          <img src={getImageUrl(post.image_url)} alt={post.title} className="w-full aspect-square object-cover" />
           <div className="px-4 py-3 space-y-2">
             <div className="flex items-center gap-4">
               <button onClick={handleLike} className="text-lg">{post.is_liked ? "❤️" : "🤍"}</button>
