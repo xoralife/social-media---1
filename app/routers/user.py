@@ -45,6 +45,7 @@ def get_my_profile(db: Session = Depends(get_db_session), current_user: User = D
         id=current_user.id,
         username=current_user.username,
         email=current_user.email,
+        account_status=current_user.account_status,
         bio=current_user.bio,
         profile_pic=current_user.profile_pic,
         posts_count=posts_count,
@@ -66,12 +67,13 @@ def get_user_profile(user_id: int, db: Session = Depends(get_db_session), curren
         id=user.id,
         username=user.username,
         email=user.email,
+        account_status=user.account_status,
         bio=user.bio,
         profile_pic=user.profile_pic,
         posts_count=posts_count,
         followers_count=followers_count,
         following_count=following_count,
-    is_following=is_following,
+        is_following=is_following,
         )
 
 class ProfileUpdate(BaseModel):

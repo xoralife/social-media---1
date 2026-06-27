@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { api, getImageUrl } from "@/lib/api"
 import { useAuth } from "@/context/AuthContext"
+import ThemeToggle from "@/components/ThemeToggle"
 
 export default function EditProfile() {
   const { token } = useAuth()
@@ -54,7 +55,10 @@ export default function EditProfile() {
       <header className="border-b border-border">
         <div className="max-w-xl mx-auto px-4 h-12 flex items-center justify-between">
           <Link href="/" className="text-lg font-bold">SocialApp</Link>
-          <Link href="/profile" className="text-sm">Cancel</Link>
+          <div className="flex items-center gap-3 text-sm">
+            <ThemeToggle />
+            <Link href="/profile">Cancel</Link>
+          </div>
         </div>
       </header>
 

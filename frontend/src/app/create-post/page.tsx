@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { api } from "@/lib/api"
 import { useAuth } from "@/context/AuthContext"
+import ThemeToggle from "@/components/ThemeToggle"
 
 export default function CreatePost() {
   const { token } = useAuth()
@@ -55,7 +56,10 @@ export default function CreatePost() {
       <header className="border-b border-border">
         <div className="max-w-xl mx-auto px-4 h-12 flex items-center justify-between">
           <Link href="/" className="text-lg font-bold">SocialApp</Link>
-          <Link href="/dashboard" className="text-sm">Dashboard</Link>
+          <div className="flex items-center gap-3 text-sm">
+            <ThemeToggle />
+            <Link href="/dashboard">Dashboard</Link>
+          </div>
         </div>
       </header>
 

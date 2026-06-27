@@ -9,10 +9,73 @@
   --color-border: #dbdbdb;
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --color-bg-card: #ffffff;
+  --color-bg-input: #ffffff;
+  --color-text-main: #000000;
+  --color-text-secondary: #6b7280;
+  --color-text-muted: #9ca3af;
+  --color-bg-subtle: #f9fafb;
+  --color-bg-hover: #f3f4f6;
+  --color-bg-danger: #fef2f2;
+  --color-text-danger: #dc2626;
+  --color-bg-danger-hover: #fee2e2;
+  --color-status-band-bg: #fee2e2;
+  --color-status-band-text: #dc2626;
+  --color-status-restricted-bg: #fef3c7;
+  --color-status-restricted-text: #d97706;
+  --color-status-warning-bg: #dbeafe;
+  --color-status-warning-text: #2563eb;
 }
 
 body {
-  background: #e8e8e8;
-  color: #000000;
+  background: var(--color-surface);
+  color: var(--color-text-main);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  transition: background 0.2s, color 0.2s;
 }
+
+html.dark {
+  --color-surface: #121212;
+  --color-border: #333333;
+  --color-primary: #ffffff;
+  --color-primary-hover: #cccccc;
+  --color-secondary: #2a2a2a;
+  --color-bg-card: #1a1a1a;
+  --color-bg-input: #222222;
+  --color-text-main: #e5e5e5;
+  --color-text-secondary: #9ca3af;
+  --color-text-muted: #6b7280;
+  --color-bg-subtle: #222222;
+  --color-bg-hover: #333333;
+  --color-bg-danger: #3a1a1a;
+  --color-text-danger: #fca5a5;
+  --color-bg-danger-hover: #4a2020;
+  --color-status-band-bg: #4a1a1a;
+  --color-status-band-text: #fca5a5;
+  --color-status-restricted-bg: #3a3520;
+  --color-status-restricted-text: #fbbf24;
+  --color-status-warning-bg: #1a2a4a;
+  --color-status-warning-text: #93c5fd;
+}
+
+html.dark body {
+  background: var(--color-surface);
+  color: var(--color-text-main);
+}
+
+.bg-white { background-color: var(--color-bg-card); }
+.bg-black { background-color: var(--color-primary); }
+.text-black { color: var(--color-text-main); }
+.text-white { color: #ffffff; }
+html.dark .bg-black.text-white { color: #000000; }
+.text-gray-500 { color: var(--color-text-secondary); }
+.text-gray-400 { color: var(--color-text-muted); }
+.text-red-500 { color: var(--color-text-danger); }
+.bg-gray-50 { background-color: var(--color-bg-subtle); }
+.bg-gray-100 { background-color: var(--color-bg-hover); }
+.bg-red-50 { background-color: var(--color-bg-danger); }
+.hover\:bg-gray-50:hover { background-color: var(--color-bg-hover); }
+.hover\:bg-gray-200:hover { background-color: var(--color-bg-hover); }
+.hover\:bg-red-100:hover { background-color: var(--color-bg-danger-hover); }
+.border-border { border-color: var(--color-border); }
+.bg-surface { background-color: var(--color-surface); }

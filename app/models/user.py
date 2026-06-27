@@ -9,6 +9,7 @@ class User(Base):
     username = Column(String(255), nullable=False)
     email = Column(String(255), unique=True, nullable=False, index=True)
     password = Column(Text, nullable=False)
+    account_status = Column(String(50), nullable=True)
     bio = Column(Text, nullable=True)
     profile_pic = Column(String(500), nullable=True)
 

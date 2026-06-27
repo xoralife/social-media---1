@@ -16,6 +16,7 @@ class UserResponse(BaseModel):
     id: int
     username: str
     email: EmailStr
+    account_status: Optional[str] = None
     bio: Optional[str] = None
     profile_pic: Optional[str] = None
     model_config = ConfigDict(from_attributes=True)
@@ -28,6 +29,7 @@ class UserProfileResponse(BaseModel):
     id: int
     username: str
     email: str
+    account_status: Optional[str] = None
     bio: Optional[str] = None
     profile_pic: Optional[str] = None
     posts_count: int = 0

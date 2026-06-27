@@ -5,11 +5,13 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { api, getImageUrl } from "@/lib/api"
 import { useAuth } from "@/context/AuthContext"
+import ThemeToggle from "@/components/ThemeToggle"
 
 type Profile = {
   id: number
   username: string
   email: string
+  account_status?: string
   bio?: string
   profile_pic?: string
   posts_count: number
@@ -77,6 +79,7 @@ export default function MyProfile() {
         <div className="max-w-xl mx-auto px-4 h-12 flex items-center justify-between">
           <Link href="/" className="text-lg font-bold">SocialApp</Link>
           <nav className="flex items-center gap-3 text-sm">
+            <ThemeToggle />
             <Link href="/">Home</Link>
             <Link href="/create-post">Create</Link>
             <Link href="/chat">Chat</Link>
@@ -121,6 +124,15 @@ export default function MyProfile() {
           </div>
         </div>
 
+        {profile.account_status && (
+          <div className="mb-3 px-3 py-2 rounded-lg text-sm font-semibold text-center"
+            style={{
+              backgroundColor: profile.account_status === "Account Band" ? "var(--color-status-band-bg)" : profile.account_status === "Restricted" ? "var(--color-status-restricted-bg)" : "var(--color-status-warning-bg)",
+              color: profile.account_status === "Account Band" ? "var(--color-status-band-text)" : profile.account_status === "Restricted" ? "var(--color-status-restricted-text)" : "var(--color-status-warning-text)"
+            }}>
+            {profile.account_status}
+          </div>
+        )}
         <p className="text-sm mb-4">{profile.bio || "I am A penter"}</p>
 
         <div className="flex gap-2 mb-6">

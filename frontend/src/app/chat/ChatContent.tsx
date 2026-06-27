@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { api, getImageUrl } from "@/lib/api"
 import { useAuth } from "@/context/AuthContext"
+import ThemeToggle from "@/components/ThemeToggle"
 
 type Conversation = {
   user_id: number
@@ -78,6 +79,7 @@ export default function ChatContent() {
         <div className="max-w-xl mx-auto px-4 h-12 flex items-center justify-between">
           <Link href="/" className="text-lg font-bold">SocialApp</Link>
           <nav className="flex items-center gap-3 text-sm">
+            <ThemeToggle />
             <Link href="/dashboard">Dashboard</Link>
             <Link href="/profile">Profile</Link>
           </nav>

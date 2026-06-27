@@ -134,4 +134,23 @@ export const api = {
 
   adminPosts: (token: string) =>
     request("/admin/posts", { headers: { Authorization: `Bearer ${token}` } }),
+
+  adminUpdateUser: (userId: number, data: { username?: string; email?: string; account_status?: string; bio?: string }, token: string) =>
+    request(`/admin/users/${userId}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+      headers: { Authorization: `Bearer ${token}` },
+    }),
+
+  adminDeletePost: (postId: number, token: string) =>
+    request(`/admin/posts/${postId}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    }),
+
+  adminDeleteUser: (userId: number, token: string) =>
+    request(`/admin/users/${userId}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    }),
 }
