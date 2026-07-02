@@ -11,6 +11,7 @@ from app.schemas.post import PostCreate, PostResponse, PostDetailResponse
 from app.schemas.like import LikeCreate, LikeResponse
 from app.schemas.comment import CommentCreate, CommentResponse
 from app.services.post_service import PostService
+from app.utils.cloudinary_upload import upload_file
 import os
 import uuid
 
@@ -18,12 +19,18 @@ router = APIRouter(prefix="/user/post", tags=["Post Operations"])
 
 @router.post("/upload-image")
 def upload_image(file: UploadFile = File(...), db: Session = Depends(get_db_session), current_user: User = Depends(get_current_user)):
-    ext = file.filename.split(".")[-1] if "." in file.filename else "jpg"
-    filename = f"{uuid.uuid4()}.{ext}"
-    path = os.path.join("app/uploads", filename)
-    with open(path, "wb") as f:
-        f.write(file.file.read())
-    return {"image_url": f"/uploads/{filename}"}
+    from app.config import settings
+    data = file.file.read()
+    if settings.CLOUDINARY_CLOUD_NAME:
+        url = upload_file(data, folder="post_images")
+    else:
+        ext = file.filename.split(".")[-1] if "." in file.filename else "jpg"
+        filename = f"{uuid.uuid4()}.{ext}"
+        path = os.path.join("app/uploads", filename)
+        with open(path, "wb") as f:
+            f.write(data)
+        url = f"/uploads/{filename}"
+    return {"image_url": url}
 
 @router.get("/list", response_model=list[PostDetailResponse])
 def list_posts(limit: int = Query(10, ge=1, le=100), offset: int = Query(0, ge=0), db: Session = Depends(get_db_session), current_user: User = Depends(get_current_user)):

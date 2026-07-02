@@ -12,6 +12,7 @@ from app.models.message import Message
 from app.schemas.user import UserCreate, UserLogin, UserResponse, Token, UserProfileResponse
 from app.services.user_service import UserService
 from app.services.auth_service import AuthService
+from app.utils.cloudinary_upload import upload_file
 import os
 import uuid
 
@@ -27,12 +28,18 @@ def login(login_data: UserLogin, db: Session = Depends(get_db_session)):
 
 @router.post("/upload-pic")
 def upload_profile_pic(file: UploadFile = File(...), db: Session = Depends(get_db_session), current_user: User = Depends(get_current_user)):
-    ext = file.filename.split(".")[-1] if "." in file.filename else "jpg"
-    filename = f"{uuid.uuid4()}.{ext}"
-    path = os.path.join("app/uploads", filename)
-    with open(path, "wb") as f:
-        f.write(file.file.read())
-    current_user.profile_pic = f"/uploads/{filename}"
+    from app.config import settings
+    data = file.file.read()
+    if settings.CLOUDINARY_CLOUD_NAME:
+        url = upload_file(data, folder="profile_pics")
+    else:
+        ext = file.filename.split(".")[-1] if "." in file.filename else "jpg"
+        filename = f"{uuid.uuid4()}.{ext}"
+        path = os.path.join("app/uploads", filename)
+        with open(path, "wb") as f:
+            f.write(data)
+        url = f"/uploads/{filename}"
+    current_user.profile_pic = url
     db.commit()
     return {"profile_pic": current_user.profile_pic}
 

@@ -14,7 +14,7 @@ export default function Navbar({ children }: { children?: React.ReactNode }) {
     return (
       <header className="border-b border-border">
         <div className="max-w-xl mx-auto px-4 h-12 flex items-center justify-between">
-          <h1 className="text-lg font-bold">GareebungKaInsta</h1>
+          <h1 className="text-lg font-bold">SocialApp</h1>
           <nav className="flex items-center gap-4 text-sm">
             <ThemeToggle />
             <Link href="/login">Log in</Link>
@@ -28,7 +28,7 @@ export default function Navbar({ children }: { children?: React.ReactNode }) {
   return (
     <header className="bg-white border-b border-border">
       <div className="max-w-xl mx-auto px-4 h-12 flex items-center justify-between">
-        <Link href="/" className="text-lg font-bold">GareebungKaInsta</Link>
+        <Link href="/" className="text-lg font-bold">SocialApp</Link>
         <div className="flex items-center gap-3 text-sm">
           {children}
           <ThemeToggle />
@@ -41,7 +41,6 @@ export default function Navbar({ children }: { children?: React.ReactNode }) {
                   {user.username.charAt(0).toUpperCase()}
                 </div>
               )}
-              <span className="font-medium text-xs">{user.username}</span>
             </Link>
           )}
           <button onClick={() => { logout(); router.push("/") }} className="text-red-500">Logout</button>
