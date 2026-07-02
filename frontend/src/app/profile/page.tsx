@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { api, getImageUrl } from "@/lib/api"
 import { useAuth } from "@/context/AuthContext"
-import ThemeToggle from "@/components/ThemeToggle"
+import Navbar from "@/components/Navbar"
 
 type Profile = {
   id: number
@@ -26,7 +26,7 @@ type Post = {
 }
 
 export default function MyProfile() {
-  const { token, logout } = useAuth()
+  const { token, logout, setUser } = useAuth()
   const router = useRouter()
   const [profile, setProfile] = useState<Profile | null>(null)
   const [myPosts, setMyPosts] = useState<Post[]>([])
@@ -50,6 +50,7 @@ export default function MyProfile() {
     try {
       const res = await api.uploadProfilePic(e.target.files[0], token)
       setProfile(prev => prev ? { ...prev, profile_pic: res.profile_pic } : prev)
+      setUser(prev => prev ? { ...prev, profile_pic: res.profile_pic } : null)
     } catch {}
   }
 
@@ -75,19 +76,12 @@ export default function MyProfile() {
 
   return (
     <div className="min-h-screen bg-white">
-      <header className="border-b border-border">
-        <div className="max-w-xl mx-auto px-4 h-12 flex items-center justify-between">
-          <Link href="/" className="text-lg font-bold">SocialApp</Link>
-          <nav className="flex items-center gap-3 text-sm">
-            <ThemeToggle />
-            <Link href="/">Home</Link>
-            <Link href="/create-post">Create</Link>
-            <Link href="/chat">Chat</Link>
-            <Link href="/profile/edit">Edit</Link>
-            <button onClick={() => { logout(); router.push("/") }} className="text-red-500">Logout</button>
-          </nav>
-        </div>
-      </header>
+      <Navbar>
+        <Link href="/">Home</Link>
+        <Link href="/create-post">Create</Link>
+        <Link href="/chat">Chat</Link>
+        <Link href="/profile/edit">Edit</Link>
+      </Navbar>
 
       <main className="max-w-xl mx-auto px-4 py-8">
         <div className="flex items-center gap-6 mb-6">

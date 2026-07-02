@@ -5,7 +5,7 @@ import { useRouter, useParams } from "next/navigation"
 import Link from "next/link"
 import { api, getImageUrl } from "@/lib/api"
 import { useAuth } from "@/context/AuthContext"
-import ThemeToggle from "@/components/ThemeToggle"
+import Navbar from "@/components/Navbar"
 
 type Profile = {
   id: number
@@ -72,16 +72,10 @@ export default function UserProfile() {
 
   return (
     <div className="min-h-screen bg-white">
-      <header className="border-b border-border">
-        <div className="max-w-xl mx-auto px-4 h-12 flex items-center justify-between">
-          <Link href="/" className="text-lg font-bold">SocialApp</Link>
-          <nav className="flex items-center gap-3 text-sm">
-            <ThemeToggle />
-            <Link href="/">Home</Link>
-            <Link href="/chat">Chat</Link>
-          </nav>
-        </div>
-      </header>
+      <Navbar>
+        <Link href="/">Home</Link>
+        <Link href="/chat">Chat</Link>
+      </Navbar>
 
       <main className="max-w-xl mx-auto px-4 py-8">
         <div className="flex items-center gap-6 mb-6">

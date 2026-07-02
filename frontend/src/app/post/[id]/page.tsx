@@ -5,7 +5,7 @@ import { useRouter, useParams } from "next/navigation"
 import Link from "next/link"
 import { api, getImageUrl } from "@/lib/api"
 import { useAuth } from "@/context/AuthContext"
-import ThemeToggle from "@/components/ThemeToggle"
+import Navbar from "@/components/Navbar"
 
 type Post = {
   id: number
@@ -83,15 +83,9 @@ export default function PostDetail() {
 
   return (
     <div className="min-h-screen bg-surface">
-      <header className="bg-white border-b border-border">
-        <div className="max-w-xl mx-auto px-4 h-12 flex items-center justify-between">
-          <Link href="/" className="text-lg font-bold">SocialApp</Link>
-          <div className="flex items-center gap-3 text-sm">
-            <ThemeToggle />
-            <Link href="/">Back</Link>
-          </div>
-        </div>
-      </header>
+      <Navbar>
+        <Link href="/">Back</Link>
+      </Navbar>
 
       <div className="max-w-xl mx-auto px-4 py-8">
         <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-border">

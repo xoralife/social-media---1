@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { api, getImageUrl } from "@/lib/api"
 import { useAuth } from "@/context/AuthContext"
-import ThemeToggle from "@/components/ThemeToggle"
+import Navbar from "@/components/Navbar"
 
 type Conversation = {
   user_id: number
@@ -75,16 +75,10 @@ export default function ChatContent() {
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
-      <header className="border-b border-border">
-        <div className="max-w-xl mx-auto px-4 h-12 flex items-center justify-between">
-          <Link href="/" className="text-lg font-bold">SocialApp</Link>
-          <nav className="flex items-center gap-3 text-sm">
-            <ThemeToggle />
-            <Link href="/dashboard">Dashboard</Link>
-            <Link href="/profile">Profile</Link>
-          </nav>
-        </div>
-      </header>
+      <Navbar>
+        <Link href="/dashboard">Dashboard</Link>
+        <Link href="/profile">Profile</Link>
+      </Navbar>
 
       <div className="flex-1 flex max-w-xl mx-auto w-full">
         <div className="w-64 border-r border-border overflow-y-auto">

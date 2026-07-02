@@ -1,11 +1,10 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { api, getImageUrl } from "@/lib/api"
 import { useAuth } from "@/context/AuthContext"
-import ThemeToggle from "@/components/ThemeToggle"
+import Navbar from "@/components/Navbar"
 
 type Post = {
   id: number
@@ -21,8 +20,7 @@ type Post = {
 }
 
 export default function Home() {
-  const { token, logout } = useAuth()
-  const router = useRouter()
+  const { token } = useAuth()
   const [posts, setPosts] = useState<Post[]>([])
 
   useEffect(() => {
@@ -33,16 +31,7 @@ export default function Home() {
   if (!token) {
     return (
       <div className="min-h-screen flex flex-col bg-white">
-        <header className="border-b border-border">
-          <div className="max-w-xl mx-auto px-4 h-12 flex items-center justify-between">
-            <h1 className="text-lg font-bold">SocialApp</h1>
-            <nav className="flex items-center gap-4 text-sm">
-              <ThemeToggle />
-              <Link href="/login">Log in</Link>
-              <Link href="/register" className="bg-black text-white px-4 py-1.5 rounded-lg font-semibold">Sign up</Link>
-            </nav>
-          </div>
-        </header>
+        <Navbar />
 
         <main className="flex-1 flex items-center justify-center px-4">
           <div className="text-center max-w-lg">
@@ -71,18 +60,11 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-surface">
-      <header className="bg-white border-b border-border">
-        <div className="max-w-xl mx-auto px-4 h-12 flex items-center justify-between">
-          <Link href="/" className="text-lg font-bold">SocialApp</Link>
-          <div className="flex items-center gap-3 text-sm">
-            <ThemeToggle />
-            <Link href="/create-post">Create</Link>
-            <Link href="/profile">Profile</Link>
-            <Link href="/chat">Chat</Link>
-            <button onClick={() => { logout(); router.push("/") }} className="text-red-500">Logout</button>
-          </div>
-        </div>
-      </header>
+      <Navbar>
+        <Link href="/create-post">Create</Link>
+        <Link href="/profile">Profile</Link>
+        <Link href="/chat">Chat</Link>
+      </Navbar>
 
       <div className="max-w-xl mx-auto px-4 space-y-4 pb-8 pt-4">
         {posts.length === 0 && (

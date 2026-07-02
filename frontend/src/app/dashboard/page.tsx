@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { api, getImageUrl } from "@/lib/api"
 import { useAuth } from "@/context/AuthContext"
-import ThemeToggle from "@/components/ThemeToggle"
+import Navbar from "@/components/Navbar"
 
 type Post = {
   id: number
@@ -21,7 +21,7 @@ type Post = {
 }
 
 export default function Dashboard() {
-  const { token, logout } = useAuth()
+  const { token } = useAuth()
   const router = useRouter()
   const [posts, setPosts] = useState<Post[]>([])
   const [myId, setMyId] = useState<number | null>(null)
@@ -64,18 +64,11 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-surface">
-      <header className="bg-white border-b border-border">
-        <div className="max-w-xl mx-auto px-4 h-12 flex items-center justify-between">
-          <Link href="/" className="text-lg font-bold">SocialApp</Link>
-          <div className="flex items-center gap-3 text-sm">
-            <ThemeToggle />
-            <Link href="/create-post">Create</Link>
-            <Link href="/profile">Profile</Link>
-            <Link href="/chat">Chat</Link>
-            <button onClick={() => { logout(); router.push("/") }} className="text-red-500">Logout</button>
-          </div>
-        </div>
-      </header>
+      <Navbar>
+        <Link href="/create-post">Create</Link>
+        <Link href="/profile">Profile</Link>
+        <Link href="/chat">Chat</Link>
+      </Navbar>
 
       <div className="max-w-xl mx-auto px-4 py-4">
         <div className="flex gap-2 mb-4">
