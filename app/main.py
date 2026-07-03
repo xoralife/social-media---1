@@ -33,7 +33,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-if settings.DATABASE_URL.startswith("sqlite"):
+if not settings.CLOUDINARY_CLOUD_NAME:
     os.makedirs("app/uploads", exist_ok=True)
     app.mount("/uploads", StaticFiles(directory="app/uploads"), name="uploads")
 

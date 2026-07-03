@@ -1,0 +1,14 @@
+import sys
+import os
+
+path = os.path.dirname(os.path.abspath(__file__))
+if path not in sys.path:
+    sys.path.append(path)
+
+os.environ.setdefault("DATABASE_URL", "sqlite:///./instagram.db")
+
+from app.main import app
+
+# For PythonAnywhere ASGI mode, they need access to the ASGI app
+# Configure in Web tab: ASGI app = "wsgi:app"
+
