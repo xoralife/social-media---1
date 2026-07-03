@@ -110,12 +110,12 @@ export default function Dashboard() {
                 )}
                 <Link href={`/profile/${post.user_id}`} className="text-sm font-semibold">{post.username}</Link>
               </div>
-              {myId === post.user_id && (
+              {/* {myId === post.user_id && (
                 <button onClick={() => handleDelete(post.id)}
                   className="text-sm text-red-500 hover:text-red-700 font-semibold">
                   Delete
                 </button>
-              )}
+              )} */}
             </div>
             <Link href={`/post/${post.id}`}>
               <img src={getImageUrl(post.image_url)} alt={post.title} className="w-full aspect-square object-cover" />

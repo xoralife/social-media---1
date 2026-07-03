@@ -49,6 +49,46 @@ export default function UserProfile() {
     }).catch(() => {})
   }, [token, profile])
 
+  const [showFollowers, setShowFollowers] = useState(false)
+  const [showFollowing, setShowFollowing] = useState(false)
+  const [followList, setFollowList] = useState<{ id: number; username: string; profile_pic: string | null; is_following: boolean }[]>([])
+
+  const openFollowers = async () => {
+    if (!token || !profile) return
+    try {
+      const data = await api.getUserFollowers(profile.id, token)
+      setFollowList(data)
+      setShowFollowers(true)
+    } catch {}
+  }
+
+  const openFollowing = async () => {
+    if (!token || !profile) return
+    try {
+      const data = await api.getUserFollowing(profile.id, token)
+      setFollowList(data)
+      setShowFollowing(true)
+    } catch {}
+  }
+
+  const handleFollowUser = async (userId: number, isFollowing: boolean) => {
+    if (!token) return
+    try {
+      if (isFollowing) {
+        await api.unfollowUser(userId, token)
+        setFollowList(prev => prev.map(u => u.id === userId ? { ...u, is_following: false } : u))
+      } else {
+        await api.followUser(userId, token)
+        setFollowList(prev => prev.map(u => u.id === userId ? { ...u, is_following: true } : u))
+      }
+      if (profile && profile.id === userId) {
+        setProfile({ ...profile, is_following: !isFollowing, followers_count: isFollowing ? profile.followers_count - 1 : profile.followers_count + 1 })
+      }
+    } catch (err: any) {
+      alert(err.message)
+    }
+  }
+
   const handleFollow = async () => {
     if (!token || !profile) return
     try {
@@ -59,7 +99,9 @@ export default function UserProfile() {
         await api.followUser(profile.id, token)
         setProfile({ ...profile, is_following: true, followers_count: profile.followers_count + 1 })
       }
-    } catch {}
+    } catch (err: any) {
+      alert(err.message)
+    }
   }
 
   if (error) return (
@@ -90,8 +132,8 @@ export default function UserProfile() {
             <h2 className="text-xl font-semibold">{profile.username}</h2>
             <div className="flex gap-6 mt-3 text-sm">
               <span><strong>{profile.posts_count}</strong> posts</span>
-              <span><strong>{profile.followers_count}</strong> followers</span>
-              <span><strong>{profile.following_count}</strong> following</span>
+              <button onClick={openFollowers} className="hover:underline"><strong>{profile.followers_count}</strong> followers</button>
+              <button onClick={openFollowing} className="hover:underline"><strong>{profile.following_count}</strong> following</button>
             </div>
           </div>
         </div>
@@ -130,6 +172,38 @@ export default function UserProfile() {
           ))}
         </div>
       </main>
+
+      {(showFollowers || showFollowing) && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50" onClick={() => { setShowFollowers(false); setShowFollowing(false) }}>
+          <div className="bg-white rounded-xl p-4 w-full max-w-sm mx-4 max-h-96 overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-bold text-sm">{showFollowers ? "Followers" : "Following"}</h3>
+              <button onClick={() => { setShowFollowers(false); setShowFollowing(false) }} className="text-lg leading-none">&times;</button>
+            </div>
+            {followList.length === 0 && <p className="text-gray-400 text-sm text-center py-4">No {showFollowers ? "followers" : "following"} yet.</p>}
+            {followList.map(u => (
+              <div key={u.id} className="flex items-center justify-between py-2">
+                <Link href={`/profile/${u.id}`} className="flex items-center gap-2 flex-1 min-w-0" onClick={() => { setShowFollowers(false); setShowFollowing(false) }}>
+                  {u.profile_pic ? (
+                    <img src={getImageUrl(u.profile_pic)} alt="" className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-xs font-semibold flex-shrink-0">
+                      {u.username.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <span className="text-sm font-medium truncate">{u.username}</span>
+                </Link>
+                <button onClick={() => handleFollowUser(u.id, u.is_following)}
+                  className={`text-sm font-semibold px-3 py-1 rounded-lg ${
+                    u.is_following ? "bg-gray-100 hover:bg-gray-200" : "bg-black text-white hover:bg-gray-800"
+                  }`}>
+                  {u.is_following ? "Following" : "Follow"}
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

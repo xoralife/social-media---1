@@ -123,6 +123,18 @@ export const api = {
       headers: { Authorization: `Bearer ${token}` },
     }),
 
+  getFollowers: (token: string) =>
+    request("/user/followers", { headers: { Authorization: `Bearer ${token}` } }),
+
+  getFollowing: (token: string) =>
+    request("/user/following", { headers: { Authorization: `Bearer ${token}` } }),
+
+  getUserFollowers: (userId: number, token: string) =>
+    request(`/user/${userId}/followers`, { headers: { Authorization: `Bearer ${token}` } }),
+
+  getUserFollowing: (userId: number, token: string) =>
+    request(`/user/${userId}/following`, { headers: { Authorization: `Bearer ${token}` } }),
+
   getUnreadCount: (token: string) =>
     request("/chat/unread-count", { headers: { Authorization: `Bearer ${token}` } }),
 

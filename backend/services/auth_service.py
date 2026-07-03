@@ -1,0 +1,22 @@
+from sqlalchemy.orm import Session
+from fastapi import HTTPException, status
+from backend.models import User, Admin
+from backend.schemas.user import UserLogin
+from backend.schemas.admin import AdminLogin
+from backend.utils.security import verify_password
+from backend.utils.jwt_handler import create_access_token
+
+class AuthService:
+    @staticmethod
+    def authenticate_user(db: Session, login_data: UserLogin) -> str:
+        user = db.query(User).filter(User.email == login_data.email).first()
+        if not user or not verify_password(login_data.password, user.password):
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect email or password")
+        return create_access_token(data={"sub": str(user.id), "role": "user"})
+
+    @staticmethod
+    def authenticate_admin(db: Session, login_data: AdminLogin) -> str:
+        admin = db.query(Admin).filter(Admin.username == login_data.username).first()
+        if not admin or not verify_password(login_data.password, admin.password):
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect username or password")
+        return create_access_token(data={"sub": str(admin.id), "role": "admin"})
