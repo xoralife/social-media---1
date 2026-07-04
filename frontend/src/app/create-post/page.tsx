@@ -3,7 +3,7 @@
 import { useState, useRef } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { api } from "@/lib/api"
+import { api, getImageUrl } from "@/lib/api"
 import { useAuth } from "@/context/AuthContext"
 import Navbar from "@/components/Navbar"
 
@@ -11,9 +11,10 @@ export default function CreatePost() {
   const { token } = useAuth()
   const router = useRouter()
   const [form, setForm] = useState({ title: "", caption: "" })
-  const [imageUrl, setImageUrl] = useState("")
+  const [mediaUrl, setMediaUrl] = useState("")
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [preview, setPreview] = useState("")
+  const [mediaType, setMediaType] = useState<"image" | "video">("image")
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
@@ -28,7 +29,8 @@ export default function CreatePost() {
     if (!file) return
     setSelectedFile(file)
     setPreview(URL.createObjectURL(file))
-    setImageUrl("")
+    setMediaUrl("")
+    setMediaType(file.type.startsWith("video/") ? "video" : "image")
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -36,13 +38,15 @@ export default function CreatePost() {
     setError("")
     setLoading(true)
     try {
-      let url = imageUrl
+      let url = mediaUrl
+      let type = mediaType
       if (selectedFile) {
         const res = await api.uploadPostImage(selectedFile, token)
         url = res.image_url
+        type = selectedFile.type.startsWith("video/") ? "video" : "image"
       }
-      if (!url) { setError("Please select an image or enter a URL"); setLoading(false); return }
-      await api.createPost({ title: form.title, caption: form.caption, image_url: url }, token)
+      if (!url) { setError("Please select a file or enter a URL"); setLoading(false); return }
+      await api.createPost({ title: form.title, caption: form.caption, image_url: url, media_type: type }, token)
       router.push("/")
     } catch (err: any) {
       setError(err.message)
@@ -64,17 +68,21 @@ export default function CreatePost() {
 
           <div className="border-2 border-dashed border-border rounded-lg p-8 text-center">
             {preview ? (
-              <img src={preview} alt="Preview" className="w-full aspect-square object-cover rounded-lg" />
+              mediaType === "video" ? (
+                <video src={preview} className="w-full aspect-square object-cover rounded-lg" controls />
+              ) : (
+                <img src={preview} alt="Preview" className="w-full aspect-square object-cover rounded-lg" />
+              )
             ) : (
               <div>
                 <p className="text-sm text-gray-500 mb-2">Upload from computer</p>
                 <button type="button" onClick={() => fileRef.current?.click()}
                   className="px-4 py-2 bg-black text-white rounded-lg text-sm font-semibold">
-                  Select Image
+                  Select Image or Video
                 </button>
               </div>
             )}
-            <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFileSelect} />
+            <input ref={fileRef} type="file" accept="image/*,video/*" className="hidden" onChange={handleFileSelect} />
           </div>
 
           <div className="flex items-center gap-2 text-sm text-gray-400">
@@ -83,8 +91,8 @@ export default function CreatePost() {
             <div className="flex-1 border-t border-border" />
           </div>
 
-          <input type="url" placeholder="Paste image URL" value={imageUrl}
-            onChange={e => { setImageUrl(e.target.value); if (e.target.value) { setSelectedFile(null); setPreview(e.target.value) }}}
+          <input type="url" placeholder="Paste media URL (image or video)" value={mediaUrl}
+            onChange={e => { setMediaUrl(e.target.value); if (e.target.value) { setSelectedFile(null); setPreview(e.target.value) }}}
             className="w-full px-3 py-2 border border-border rounded-lg text-sm outline-none focus:border-gray-400" />
 
           <input type="text" required placeholder="Title" value={form.title}
