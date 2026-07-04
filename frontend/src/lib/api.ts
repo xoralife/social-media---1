@@ -46,7 +46,7 @@ export const api = {
   uploadProfilePic: (file: File, token: string) =>
     uploadFile("/user/upload-pic", file, token),
 
-  createPost: (data: { title: string; caption?: string; image_url: string }, token: string) =>
+  createPost: (data: { title: string; caption?: string; image_url: string; media_type?: string }, token: string) =>
     request("/user/post/create", {
       method: "POST",
       body: JSON.stringify(data),
@@ -57,6 +57,12 @@ export const api = {
     request("/user/post/like", {
       method: "POST",
       body: JSON.stringify({ post_id: postId }),
+      headers: { Authorization: `Bearer ${token}` },
+    }),
+
+  unlikePost: (postId: number, token: string) =>
+    request(`/user/post/like/${postId}`, {
+      method: "DELETE",
       headers: { Authorization: `Bearer ${token}` },
     }),
 
@@ -116,6 +122,25 @@ export const api = {
       method: "DELETE",
       headers: { Authorization: `Bearer ${token}` },
     }),
+
+  favoritePost: (postId: number, token: string) =>
+    request("/user/post/favorite", {
+      method: "POST",
+      body: JSON.stringify({ post_id: postId }),
+      headers: { Authorization: `Bearer ${token}` },
+    }),
+
+  unfavoritePost: (postId: number, token: string) =>
+    request(`/user/post/favorite/${postId}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    }),
+
+  getFavorites: (token: string) =>
+    request("/user/post/favorites", { headers: { Authorization: `Bearer ${token}` } }),
+
+  getLikedPosts: (token: string) =>
+    request("/user/post/liked", { headers: { Authorization: `Bearer ${token}` } }),
 
   deleteAccount: (token: string) =>
     request("/user/account", {
