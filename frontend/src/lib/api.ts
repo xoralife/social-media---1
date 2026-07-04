@@ -165,4 +165,7 @@ export const api = {
       method: "DELETE",
       headers: { Authorization: `Bearer ${token}` },
     }),
+
+  adminAnalytics: (token: string) =>
+    request("/admin/analytics", { headers: { Authorization: `Bearer ${token}` } }),
 }
