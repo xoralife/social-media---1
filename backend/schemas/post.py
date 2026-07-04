@@ -5,6 +5,7 @@ class PostBase(BaseModel):
     title: str = Field(..., min_length=1, max_length=255)
     caption: Optional[str] = None
     image_url: str = Field(..., max_length=255)
+    media_type: Optional[str] = "image"
 
 class PostCreate(PostBase):
     pass
@@ -20,3 +21,4 @@ class PostDetailResponse(PostResponse):
     like_count: int = 0
     comment_count: int = 0
     is_liked: bool = False
+    is_favorited: bool = False
