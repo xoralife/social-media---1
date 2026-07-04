@@ -13,6 +13,9 @@ export default function Navbar({ children }: { children?: React.ReactNode }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
 
+  const [showNav, setShowNav] = useState(true)
+  const lastScrollY = useRef(0)
+
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
@@ -21,6 +24,20 @@ export default function Navbar({ children }: { children?: React.ReactNode }) {
     }
     document.addEventListener("mousedown", handleClickOutside)
     return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [])
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentY = window.scrollY
+      if (currentY > lastScrollY.current && currentY > 50) {
+        setShowNav(false)
+      } else {
+        setShowNav(true)
+      }
+      lastScrollY.current = currentY
+    }
+    window.addEventListener("scroll", handleScroll, { passive: true })
+    return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
   const handleDeleteAccount = async () => {
@@ -40,7 +57,7 @@ export default function Navbar({ children }: { children?: React.ReactNode }) {
 
   if (!token) {
     return (
-      <header className="border-b border-border">
+      <header className="border-b border-border sticky top-0 z-40 bg-white">
         <div className="max-w-xl mx-auto px-4 h-12 flex items-center justify-between">
           <h1 className="text-lg font-bold">SocialApp</h1>
           <nav className="flex items-center gap-4 text-sm">
@@ -54,7 +71,7 @@ export default function Navbar({ children }: { children?: React.ReactNode }) {
   }
 
   return (
-    <header className="bg-white border-b border-border">
+    <header className={`bg-white border-b border-border sticky top-0 z-40 transition-transform duration-300 ${showNav ? "translate-y-0" : "-translate-y-full"}`}>
       <div className="max-w-xl mx-auto px-4 h-12 flex items-center justify-between">
         <Link href="/" className="text-lg font-bold">SocialApp</Link>
         <div className="flex items-center gap-3 text-sm">

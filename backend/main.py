@@ -11,6 +11,17 @@ import os
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    from sqlalchemy import inspect, text
+    inspector = inspect(engine)
+    columns = [c["name"] for c in inspector.get_columns("posts")]
+    if "media_type" not in columns:
+        with engine.connect() as conn:
+            conn.execute(text("ALTER TABLE posts ADD COLUMN media_type VARCHAR(10) DEFAULT 'image'"))
+            conn.commit()
+        print("Migration: added media_type column to posts table")
+    if "favorites" not in inspector.get_table_names():
+        Base.metadata.create_all(bind=engine)
+        print("Migration: created favorites table")
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()
     try:

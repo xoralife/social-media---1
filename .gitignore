@@ -1,7 +1,7 @@
 __pycache__/
 *.pyc
 .env
-instagram.db
+# instagram.db
 node_modules/
 .next/
 .venv/
