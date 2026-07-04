@@ -21,15 +21,26 @@ type Profile = {
 
 type Post = {
   id: number
+  user_id: number
   image_url: string
   title: string
+  media_type?: string
+  like_count: number
+  comment_count: number
+  is_liked: boolean
+  is_favorited: boolean
 }
+
+type Tab = "posts" | "likes" | "favorites"
 
 export default function MyProfile() {
   const { token, logout, setUser } = useAuth()
   const router = useRouter()
   const [profile, setProfile] = useState<Profile | null>(null)
   const [myPosts, setMyPosts] = useState<Post[]>([])
+  const [likedPosts, setLikedPosts] = useState<Post[]>([])
+  const [favPosts, setFavPosts] = useState<Post[]>([])
+  const [activeTab, setActiveTab] = useState<Tab>("posts")
   const fileRef = useRef<HTMLInputElement>(null)
   const [picHover, setPicHover] = useState(false)
 
@@ -45,6 +56,15 @@ export default function MyProfile() {
     }).catch(() => {})
   }, [token, profile])
 
+  useEffect(() => {
+    if (!token) return
+    if (activeTab === "likes") {
+      api.getLikedPosts(token).then(setLikedPosts).catch(() => {})
+    } else if (activeTab === "favorites") {
+      api.getFavorites(token).then(setFavPosts).catch(() => {})
+    }
+  }, [token, activeTab])
+
   const handlePicUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!token || !e.target.files?.[0]) return
     try {
@@ -59,6 +79,37 @@ export default function MyProfile() {
     try {
       await api.deletePost(postId, token)
       setMyPosts(prev => prev.filter(p => p.id !== postId))
+    } catch {}
+  }
+
+  const handleLikeToggle = async (post: Post) => {
+    if (!token) return
+    if (post.user_id === profile?.id) return
+    try {
+      if (post.is_liked) {
+        await api.unlikePost(post.id, token)
+      } else {
+        await api.likePost(post.id, token)
+      }
+      const updatePost = (p: Post) => p.id === post.id ? { ...p, is_liked: !p.is_liked, like_count: p.is_liked ? p.like_count - 1 : p.like_count + 1 } : p
+      setMyPosts(prev => prev.map(updatePost))
+      setLikedPosts(prev => prev.map(updatePost))
+      setFavPosts(prev => prev.map(updatePost))
+    } catch {}
+  }
+
+  const handleFavToggle = async (post: Post) => {
+    if (!token) return
+    try {
+      if (post.is_favorited) {
+        await api.unfavoritePost(post.id, token)
+      } else {
+        await api.favoritePost(post.id, token)
+      }
+      const updatePost = (p: Post) => p.id === post.id ? { ...p, is_favorited: !p.is_favorited } : p
+      setMyPosts(prev => prev.map(updatePost))
+      setLikedPosts(prev => prev.map(updatePost))
+      setFavPosts(prev => prev.filter(p => p.id !== post.id))
     } catch {}
   }
 
@@ -94,18 +145,14 @@ export default function MyProfile() {
         await api.followUser(userId, token)
         setFollowList(prev => prev.map(u => u.id === userId ? { ...u, is_following: true } : u))
       }
-      setProfile(prev => prev ? { ...prev, followers_count: isFollowing ? prev.followers_count - 1 : prev.followers_count + 1, following_count: isFollowing ? prev.following_count - 1 : prev.following_count + 1 } : prev)
+      setProfile(prev => prev ? { ...prev, followers_count: isFollowing ? prev.followers_count - 1 : prev.followers_count + 1 } : prev)
     } catch {}
   }
 
-  const handleDeleteAccount = async () => {
-    if (!token) return
-    if (!window.confirm("Are you sure you want to delete your account? This cannot be undone.")) return
-    try {
-      await api.deleteAccount(token)
-      logout()
-      router.push("/")
-    } catch {}
+  const getDisplayPosts = () => {
+    if (activeTab === "likes") return likedPosts
+    if (activeTab === "favorites") return favPosts
+    return myPosts
   }
 
   if (!profile) return null
@@ -116,7 +163,6 @@ export default function MyProfile() {
         <Link href="/">Home</Link>
         <Link href="/create-post">Create</Link>
         <Link href="/chat">Chat</Link>
-        <Link href="/profile/edit">Edit</Link>
       </Navbar>
 
       <main className="max-w-xl mx-auto px-4 py-8">
@@ -165,29 +211,56 @@ export default function MyProfile() {
         )}
         <p className="text-sm mb-4">{profile.bio || "I am A penter"}</p>
 
-        <div className="flex gap-2 mb-6">
-          <Link href="/profile/edit"
-            className="flex-1 py-1.5 text-sm font-semibold text-center bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
-            Edit Profile
-          </Link>
-          <button onClick={handleDeleteAccount}
-            className="py-1.5 px-4 text-sm font-semibold text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors">
-            Delete Account
-          </button>
+        <Link href="/profile/edit"
+          className="block w-full py-1.5 text-sm font-semibold text-center bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors mb-6">
+          Edit Profile
+        </Link>
+
+        <div className="flex border-b border-border mb-4">
+          {(["posts", "likes", "favorites"] as Tab[]).map(tab => (
+            <button key={tab} onClick={() => setActiveTab(tab)}
+              className={`flex-1 py-2 text-sm font-semibold text-center border-b-2 transition-colors ${
+                activeTab === tab ? "border-black text-black" : "border-transparent text-gray-400 hover:text-gray-600"
+              }`}>
+              {tab === "posts" ? "Posts" : tab === "likes" ? "Likes" : "Favorites"}
+            </button>
+          ))}
         </div>
 
         <div className="grid grid-cols-3 gap-1">
-          {myPosts.map(post => (
+          {getDisplayPosts().length === 0 && (
+            <div className="col-span-3 text-center py-12">
+              <p className="text-gray-400 text-sm">No {activeTab} yet.</p>
+            </div>
+          )}
+          {getDisplayPosts().map(post => (
             <div key={post.id} className="relative group aspect-square bg-gray-100 overflow-hidden">
               <Link href={`/post/${post.id}`}>
-                <img src={getImageUrl(post.image_url)} alt={post.title} className="w-full h-full object-cover" />
+                {post.media_type === "video" ? (
+                  <video src={getImageUrl(post.image_url)} className="w-full h-full object-cover" />
+                ) : (
+                  <img src={getImageUrl(post.image_url)} alt={post.title} className="w-full h-full object-cover" />
+                )}
               </Link>
-              <button
-                onClick={() => handleDeletePost(post.id)}
-                className="absolute top-1 right-1 w-6 h-6 bg-red-500 text-white rounded-full text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-              >
-                ×
-              </button>
+              {activeTab === "posts" && (
+                <button onClick={() => handleDeletePost(post.id)}
+                  className="absolute top-1 right-1 w-6 h-6 bg-red-500 text-white rounded-full text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                  ×
+                </button>
+              )}
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
+              <div className="absolute bottom-1 left-1 right-1 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                {post.user_id !== profile.id && (
+                  <button onClick={(e) => { e.preventDefault(); handleLikeToggle(post) }}
+                    className="text-xs bg-white/80 rounded px-1.5 py-0.5">
+                    {post.is_liked ? "❤️" : "🤍"} {post.like_count}
+                  </button>
+                )}
+                <button onClick={(e) => { e.preventDefault(); handleFavToggle(post) }}
+                  className="text-xs bg-white/80 rounded px-1.5 py-0.5">
+                  {post.is_favorited ? "★" : "☆"}
+                </button>
+              </div>
             </div>
           ))}
         </div>
