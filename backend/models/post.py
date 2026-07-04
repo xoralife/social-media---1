@@ -10,7 +10,9 @@ class Post(Base):
     title = Column(String(255), nullable=False)
     caption = Column(Text, nullable=True)
     image_url = Column(String(255), nullable=False)
+    media_type = Column(String(10), nullable=True, default="image")
 
     user = relationship("User", back_populates="posts")
     likes = relationship("Like", back_populates="post", cascade="all, delete-orphan")
     comments = relationship("Comment", back_populates="post", cascade="all, delete-orphan")
+    favorites = relationship("Favorite", back_populates="post", cascade="all, delete-orphan")
