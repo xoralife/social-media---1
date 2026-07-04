@@ -5,5 +5,6 @@ from backend.models.like import Like
 from backend.models.comment import Comment
 from backend.models.follow import Follow
 from backend.models.message import Message
+from backend.models.favorite import Favorite
 
-__all__ = ["User", "Admin", "Post", "Like", "Comment", "Follow", "Message"]
+__all__ = ["User", "Admin", "Post", "Like", "Comment", "Follow", "Message", "Favorite"]
