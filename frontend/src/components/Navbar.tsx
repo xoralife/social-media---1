@@ -1,14 +1,42 @@
 "use client"
 
+import { useState, useRef, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { useAuth } from "@/context/AuthContext"
-import { getImageUrl } from "@/lib/api"
+import { getImageUrl, api } from "@/lib/api"
 import ThemeToggle from "./ThemeToggle"
 
 export default function Navbar({ children }: { children?: React.ReactNode }) {
   const { token, user, logout } = useAuth()
   const router = useRouter()
+  const [menuOpen, setMenuOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [])
+
+  const handleDeleteAccount = async () => {
+    if (!token) return
+    if (!window.confirm("Are you sure you want to delete your account? This cannot be undone.")) return
+    try {
+      await api.deleteAccount(token)
+      logout()
+      router.push("/")
+    } catch {}
+  }
+
+  const handleLogout = () => {
+    logout()
+    router.push("/")
+  }
 
   if (!token) {
     return (
@@ -43,7 +71,25 @@ export default function Navbar({ children }: { children?: React.ReactNode }) {
               )}
             </Link>
           )}
-          <button onClick={() => { logout(); router.push("/") }} className="text-red-500">Logout</button>
+          <div className="relative" ref={menuRef}>
+            <button onClick={() => setMenuOpen(!menuOpen)} className="p-1 hover:bg-gray-100 rounded-lg transition-colors">
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+            {menuOpen && (
+              <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-xl shadow-lg border border-border py-1 z-50">
+                <button onClick={() => { handleLogout(); setMenuOpen(false) }}
+                  className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-gray-50 font-semibold">
+                  Logout
+                </button>
+                <button onClick={() => { handleDeleteAccount(); setMenuOpen(false) }}
+                  className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-50 font-semibold">
+                  Delete Account
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </header>
