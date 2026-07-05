@@ -1,9 +1,9 @@
-from backend.schemas.user import UserBase, UserCreate, UserLogin, UserResponse, Token, UserProfileResponse
-from backend.schemas.admin import AdminBase, AdminCreate, AdminLogin, AdminResponse
-from backend.schemas.post import PostBase, PostCreate, PostResponse, PostDetailResponse
-from backend.schemas.like import LikeCreate, LikeResponse
-from backend.schemas.comment import CommentCreate, CommentResponse
-from backend.schemas.message import MessageCreate, MessageResponse, ConversationResponse
+from schemas.user import UserBase, UserCreate, UserLogin, UserResponse, Token, UserProfileResponse
+from schemas.admin import AdminBase, AdminCreate, AdminLogin, AdminResponse
+from schemas.post import PostBase, PostCreate, PostResponse, PostDetailResponse
+from schemas.like import LikeCreate, LikeResponse
+from schemas.comment import CommentCreate, CommentResponse
+from schemas.message import MessageCreate, MessageResponse, ConversationResponse
 
 __all__ = [
     "UserBase",

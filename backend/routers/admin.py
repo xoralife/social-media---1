@@ -1,19 +1,19 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 from sqlalchemy import func
-from backend.database import get_db_session
-from backend.dependencies import get_current_admin
-from backend.models.admin import Admin
-from backend.models.user import User
-from backend.models.post import Post
-from backend.models.like import Like
-from backend.models.comment import Comment
-from backend.models.follow import Follow
-from backend.schemas.admin import AdminLogin, AdminUserEdit
-from backend.schemas.user import UserResponse, Token
-from backend.schemas.post import PostResponse
-from backend.services.admin_service import AdminService
-from backend.services.auth_service import AuthService
+from database import get_db_session
+from dependencies import get_current_admin
+from models.admin import Admin
+from models.user import User
+from models.post import Post
+from models.like import Like
+from models.comment import Comment
+from models.follow import Follow
+from schemas.admin import AdminLogin, AdminUserEdit
+from schemas.user import UserResponse, Token
+from schemas.post import PostResponse
+from services.admin_service import AdminService
+from services.auth_service import AuthService
 
 router = APIRouter(prefix="/admin", tags=["Admin Management"])
 

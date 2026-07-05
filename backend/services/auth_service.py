@@ -1,10 +1,10 @@
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
-from backend.models import User, Admin
-from backend.schemas.user import UserLogin
-from backend.schemas.admin import AdminLogin
-from backend.utils.security import verify_password
-from backend.utils.jwt_handler import create_access_token
+from models import User, Admin
+from schemas.user import UserLogin
+from schemas.admin import AdminLogin
+from utils.security import verify_password
+from utils.jwt_handler import create_access_token
 
 class AuthService:
     @staticmethod

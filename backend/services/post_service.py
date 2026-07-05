@@ -1,10 +1,10 @@
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
-from backend.models.post import Post
-from backend.models.like import Like
-from backend.models.comment import Comment
-from backend.schemas.post import PostCreate
-from backend.schemas.comment import CommentCreate
+from models.post import Post
+from models.like import Like
+from models.comment import Comment
+from schemas.post import PostCreate
+from schemas.comment import CommentCreate
 
 class PostService:
     @staticmethod

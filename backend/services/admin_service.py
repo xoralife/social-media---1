@@ -1,9 +1,9 @@
 from typing import Optional
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
-from backend.models.user import User
-from backend.models.post import Post
-from backend.models.message import Message
+from models.user import User
+from models.post import Post
+from models.message import Message
 
 class AdminService:
     @staticmethod

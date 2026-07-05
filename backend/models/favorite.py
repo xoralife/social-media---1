@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import relationship
-from backend.database import Base
+from database import Base
 
 class Favorite(Base):
     __tablename__ = "favorites"

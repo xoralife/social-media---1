@@ -3,16 +3,16 @@ from pydantic import BaseModel
 from typing import Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import func
-from backend.database import get_db_session
-from backend.dependencies import get_current_user
-from backend.models.user import User
-from backend.models.post import Post
-from backend.models.follow import Follow
-from backend.models.message import Message
-from backend.schemas.user import UserCreate, UserLogin, UserResponse, Token, UserProfileResponse, FollowUserResponse
-from backend.services.user_service import UserService
-from backend.services.auth_service import AuthService
-from backend.utils.cloudinary_upload import upload_file
+from database import get_db_session
+from dependencies import get_current_user
+from models.user import User
+from models.post import Post
+from models.follow import Follow
+from models.message import Message
+from schemas.user import UserCreate, UserLogin, UserResponse, Token, UserProfileResponse, FollowUserResponse
+from services.user_service import UserService
+from services.auth_service import AuthService
+from utils.cloudinary_upload import upload_file
 import os
 import uuid
 
@@ -28,14 +28,14 @@ def login(login_data: UserLogin, db: Session = Depends(get_db_session)):
 
 @router.post("/upload-pic")
 def upload_profile_pic(file: UploadFile = File(...), db: Session = Depends(get_db_session), current_user: User = Depends(get_current_user)):
-    from backend.config import settings
+    from config import settings
     data = file.file.read()
     if settings.CLOUDINARY_CLOUD_NAME:
         url = upload_file(data, folder="profile_pics")
     else:
         ext = file.filename.split(".")[-1] if "." in file.filename else "jpg"
         filename = f"{uuid.uuid4()}.{ext}"
-        path = os.path.join("backend/uploads", filename)
+        path = os.path.join("uploads", filename)
         with open(path, "wb") as f:
             f.write(data)
         url = f"/uploads/{filename}"

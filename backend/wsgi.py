@@ -5,7 +5,7 @@ path = os.path.dirname(os.path.abspath(__file__))
 if path not in sys.path:
     sys.path.append(path)
 
-os.environ.setdefault("DATABASE_URL", "sqlite:///./backend/instagram.db")
+os.environ.setdefault("DATABASE_URL", "sqlite:///./instagram.db")
 
 from main import app
 

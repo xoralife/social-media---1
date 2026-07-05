@@ -1,19 +1,19 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Query, status
 from sqlalchemy.orm import Session
 from sqlalchemy import func
-from backend.database import get_db_session
-from backend.dependencies import get_current_user
-from backend.models.user import User
-from backend.models.post import Post
-from backend.models.like import Like
-from backend.models.comment import Comment
-from backend.models.favorite import Favorite
-from backend.schemas.post import PostCreate, PostResponse, PostDetailResponse
-from backend.schemas.like import LikeCreate, LikeResponse
-from backend.schemas.comment import CommentCreate, CommentResponse
-from backend.schemas.favorite import FavoriteCreate, FavoriteResponse
-from backend.services.post_service import PostService
-from backend.utils.cloudinary_upload import upload_file
+from database import get_db_session
+from dependencies import get_current_user
+from models.user import User
+from models.post import Post
+from models.like import Like
+from models.comment import Comment
+from models.favorite import Favorite
+from schemas.post import PostCreate, PostResponse, PostDetailResponse
+from schemas.like import LikeCreate, LikeResponse
+from schemas.comment import CommentCreate, CommentResponse
+from schemas.favorite import FavoriteCreate, FavoriteResponse
+from services.post_service import PostService
+from utils.cloudinary_upload import upload_file
 import os
 import uuid
 
@@ -21,14 +21,14 @@ router = APIRouter(prefix="/user/post", tags=["Post Operations"])
 
 @router.post("/upload-image")
 def upload_image(file: UploadFile = File(...), db: Session = Depends(get_db_session), current_user: User = Depends(get_current_user)):
-    from backend.config import settings
+    from config import settings
     data = file.file.read()
     if settings.CLOUDINARY_CLOUD_NAME:
         url = upload_file(data, folder="post_images")
     else:
         ext = file.filename.split(".")[-1] if "." in file.filename else "jpg"
         filename = f"{uuid.uuid4()}.{ext}"
-        path = os.path.join("backend/uploads", filename)
+        path = os.path.join("uploads", filename)
         with open(path, "wb") as f:
             f.write(data)
         url = f"/uploads/{filename}"

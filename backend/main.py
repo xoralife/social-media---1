@@ -1,12 +1,16 @@
+import sys
+import os
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from backend.config import settings
-from backend.database import engine, Base, SessionLocal
-from backend.routers import user, post, admin, chat
-from backend.models.admin import Admin
-from backend.utils.security import hash_password
+from config import settings
+from database import engine, Base, SessionLocal
+from routers import user, post, admin, chat
+from models.admin import Admin
+from utils.security import hash_password
 import os
 
 @asynccontextmanager
@@ -45,8 +49,8 @@ app.add_middleware(
 )
 
 if not settings.CLOUDINARY_CLOUD_NAME:
-    os.makedirs("backend/uploads", exist_ok=True)
-    app.mount("/uploads", StaticFiles(directory="backend/uploads"), name="uploads")
+    os.makedirs("uploads", exist_ok=True)
+    app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 app.include_router(user.router)
 app.include_router(post.router)
@@ -59,5 +63,5 @@ def root():
 
 if __name__ == "__main__":
     import uvicorn
-    port = int(os.getenv("PORT", 8000))
+    port = int(os.getenv("PORT", 8001))
     uvicorn.run("backend.main:app", host="0.0.0.0", port=port)

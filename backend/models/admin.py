@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, String, Text
-from backend.database import Base
+from database import Base
 
 class Admin(Base):
     __tablename__ = "admin"

@@ -1,8 +1,8 @@
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
-from backend.models.user import User
-from backend.schemas.user import UserCreate
-from backend.utils.security import hash_password
+from models.user import User
+from schemas.user import UserCreate
+from utils.security import hash_password
 
 class UserService:
     @staticmethod
