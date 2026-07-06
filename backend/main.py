@@ -6,7 +6,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from config import settings
+from config import settings, UPLOAD_DIR
 from database import engine, Base, SessionLocal
 from routers import user, post, admin, chat
 from models.admin import Admin
@@ -49,8 +49,8 @@ app.add_middleware(
 )
 
 if not settings.CLOUDINARY_CLOUD_NAME:
-    os.makedirs("uploads", exist_ok=True)
-    app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+    os.makedirs(UPLOAD_DIR, exist_ok=True)
+    app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
 app.include_router(user.router)
 app.include_router(post.router)

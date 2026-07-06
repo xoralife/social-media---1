@@ -21,14 +21,14 @@ router = APIRouter(prefix="/user/post", tags=["Post Operations"])
 
 @router.post("/upload-image")
 def upload_image(file: UploadFile = File(...), db: Session = Depends(get_db_session), current_user: User = Depends(get_current_user)):
-    from config import settings
+    from config import settings, UPLOAD_DIR
     data = file.file.read()
     if settings.CLOUDINARY_CLOUD_NAME:
         url = upload_file(data, folder="post_images")
     else:
         ext = file.filename.split(".")[-1] if "." in file.filename else "jpg"
         filename = f"{uuid.uuid4()}.{ext}"
-        path = os.path.join("uploads", filename)
+        path = os.path.join(UPLOAD_DIR, filename)
         with open(path, "wb") as f:
             f.write(data)
         url = f"/uploads/{filename}"

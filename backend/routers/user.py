@@ -13,7 +13,6 @@ from schemas.user import UserCreate, UserLogin, UserResponse, Token, UserProfile
 from services.user_service import UserService
 from services.auth_service import AuthService
 from utils.cloudinary_upload import upload_file
-import os
 import uuid
 
 router = APIRouter(prefix="/user", tags=["User Profile"])
@@ -28,14 +27,14 @@ def login(login_data: UserLogin, db: Session = Depends(get_db_session)):
 
 @router.post("/upload-pic")
 def upload_profile_pic(file: UploadFile = File(...), db: Session = Depends(get_db_session), current_user: User = Depends(get_current_user)):
-    from config import settings
+    from config import settings, UPLOAD_DIR
     data = file.file.read()
     if settings.CLOUDINARY_CLOUD_NAME:
         url = upload_file(data, folder="profile_pics")
     else:
         ext = file.filename.split(".")[-1] if "." in file.filename else "jpg"
         filename = f"{uuid.uuid4()}.{ext}"
-        path = os.path.join("uploads", filename)
+        path = os.path.join(UPLOAD_DIR, filename)
         with open(path, "wb") as f:
             f.write(data)
         url = f"/uploads/{filename}"
