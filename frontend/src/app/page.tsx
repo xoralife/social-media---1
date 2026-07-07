@@ -5,6 +5,7 @@ import Link from "next/link"
 import { api, getImageUrl } from "@/lib/api"
 import { useAuth } from "@/context/AuthContext"
 import Navbar from "@/components/Navbar"
+import { PostMedia } from "@/components/PostMedia"
 
 type Post = {
   id: number
@@ -69,7 +70,7 @@ export default function Home() {
               <Link href="/register" className="bg-black text-white px-6 py-2 rounded-lg text-sm font-semibold">Get Started</Link>
               <Link href="/login" className="border border-border px-6 py-2 rounded-lg text-sm font-semibold">Sign In</Link>
             </div>
-            <Link href="/admin/login" className="mt-6 inline-block text-xs text-gray-400 hover:text-gray-600">Admin Login</Link>
+            {/* <Link href="/admin/login" className="mt-6 inline-block text-xs text-gray-400 hover:text-gray-600">Admin Login</Link> */}
           </div>
         </main>
       </div>
@@ -81,7 +82,6 @@ export default function Home() {
       <Navbar>
         <Link href="/create-post">Create</Link>
         <Link href="/profile">Profile</Link>
-        <Link href="/chat">Chat</Link>
       </Navbar>
 
       <div className="max-w-xl mx-auto px-4 space-y-4 pb-8 pt-4">
@@ -103,11 +103,16 @@ export default function Home() {
               </div>
             </div>
             <Link href={`/post/${post.id}`}>
-              {post.media_type === "video" ? (
-                <video src={getImageUrl(post.image_url)} className="w-full aspect-square object-cover" />
-              ) : (
-                <img src={getImageUrl(post.image_url)} alt={post.title} className="w-full aspect-square object-cover" />
-              )}
+              <PostMedia
+                src={post.image_url}
+                alt={post.title}
+                mediaType={post.media_type}
+                className={
+                  post.media_type === "video"
+                    ? "w-full aspect-square object-cover bg-black"
+                    : "w-full max-h-[600px] object-contain bg-gray-50 mx-auto"
+                }
+              />
             </Link>
             <div className="px-4 py-3 space-y-2">
               <div className="flex items-center gap-4">

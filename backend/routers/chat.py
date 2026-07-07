@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status, UploadFile, File
 from sqlalchemy.orm import Session
 from sqlalchemy import or_, and_, desc
 from database import get_db_session
@@ -7,6 +7,9 @@ from models.user import User
 from models.message import Message
 from schemas.message import MessageCreate, MessageResponse, ConversationResponse
 from datetime import datetime
+import os, uuid
+from config import settings, UPLOAD_DIR
+from utils.cloudinary_upload import upload_file
 
 router = APIRouter(prefix="/chat", tags=["Chat"])
 
@@ -41,7 +44,7 @@ def get_conversations(db: Session = Depends(get_db_session), current_user: User 
             user_id=other.id,
             username=other.username,
             profile_pic=other.profile_pic,
-            last_message=last_msg.content,
+            last_message="🎤 Voice message" if last_msg.media_type == "voice" else last_msg.content,
             last_message_time=last_msg.created_at,
             unread_count=unread,
         ))
@@ -71,11 +74,44 @@ def send_message(msg_data: MessageCreate, db: Session = Depends(get_db_session),
     other = db.query(User).filter(User.id == msg_data.receiver_id).first()
     if not other:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-    msg = Message(sender_id=current_user.id, receiver_id=msg_data.receiver_id, content=msg_data.content)
+    if not msg_data.content and not msg_data.media_url:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Message must have content or media")
+    msg = Message(
+        sender_id=current_user.id,
+        receiver_id=msg_data.receiver_id,
+        content=msg_data.content,
+        media_type=msg_data.media_type,
+        media_url=msg_data.media_url,
+    )
     db.add(msg)
     db.commit()
     db.refresh(msg)
     return msg
+
+@router.post("/upload-voice")
+def upload_voice(file: UploadFile = File(...), current_user: User = Depends(get_current_user)):
+    data = file.file.read()
+    if settings.CLOUDINARY_CLOUD_NAME:
+        url = upload_file(data, folder="voice_messages")
+    else:
+        ext = file.filename.split(".")[-1] if "." in file.filename else "webm"
+        filename = f"{uuid.uuid4()}.{ext}"
+        path = os.path.join(UPLOAD_DIR, filename)
+        with open(path, "wb") as f:
+            f.write(data)
+        url = f"/uploads/{filename}"
+    return {"media_url": url}
+
+@router.delete("/message/{message_id}")
+def delete_message(message_id: int, db: Session = Depends(get_db_session), current_user: User = Depends(get_current_user)):
+    msg = db.query(Message).filter(Message.id == message_id).first()
+    if not msg:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Message not found")
+    if msg.sender_id != current_user.id and msg.receiver_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You can only delete messages you sent or received")
+    db.delete(msg)
+    db.commit()
+    return {"message": "Message deleted successfully"}
 
 @router.get("/unread-count")
 def get_unread_count(db: Session = Depends(get_db_session), current_user: User = Depends(get_current_user)):

@@ -7,12 +7,18 @@ from models.message import Message
 
 class AdminService:
     @staticmethod
-    def list_users(db: Session, limit: int = 100, offset: int = 0) -> list[User]:
-        return db.query(User).order_by(User.id.asc()).offset(offset).limit(limit).all()
+    def list_users(db: Session, limit: int = 100, offset: int = 0, search: str = "") -> list[User]:
+        q = db.query(User)
+        if search:
+            q = q.filter(User.username.ilike(f"%{search}%"))
+        return q.order_by(User.id.asc()).offset(offset).limit(limit).all()
 
     @staticmethod
-    def list_posts(db: Session, limit: int = 100, offset: int = 0) -> list[Post]:
-        return db.query(Post).order_by(Post.id.desc()).offset(offset).limit(limit).all()
+    def list_posts(db: Session, limit: int = 100, offset: int = 0, search: str = "") -> list[Post]:
+        q = db.query(Post)
+        if search:
+            q = q.filter(Post.title.ilike(f"%{search}%"))
+        return q.order_by(Post.id.desc()).offset(offset).limit(limit).all()
 
     @staticmethod
     def edit_user(db: Session, user_id: int, username: Optional[str] = None, email: Optional[str] = None, account_status: Optional[str] = None, bio: Optional[str] = None) -> User:

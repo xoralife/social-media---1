@@ -66,7 +66,7 @@ export const api = {
       headers: { Authorization: `Bearer ${token}` },
     }),
 
-  comment: (data: { post_id: number; comment: string }, token: string) =>
+  comment: (data: { post_id: number; comment: string; parent_id?: number }, token: string) =>
     request("/user/post/comment", {
       method: "POST",
       body: JSON.stringify(data),
@@ -104,18 +104,41 @@ export const api = {
   unfollowUser: (userId: number, token: string) =>
     request(`/user/unfollow/${userId}`, { method: "POST", headers: { Authorization: `Bearer ${token}` } }),
 
-  sendMessage: (data: { receiver_id: number; content: string }, token: string) =>
+  sendMessage: (data: { receiver_id: number; content?: string; media_type?: string; media_url?: string }, token: string) =>
     request("/chat/send", {
       method: "POST",
       body: JSON.stringify(data),
       headers: { Authorization: `Bearer ${token}` },
     }),
 
+  uploadVoice: (file: Blob, token: string) => {
+    const ext = file.type.includes("mp4") ? "mp4" : file.type.includes("ogg") ? "ogg" : "webm"
+    const form = new FormData()
+    form.append("file", file, `voice.${ext}`)
+    return fetch(`${API}/chat/upload-voice`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body: form,
+    }).then(async res => {
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ detail: res.statusText }))
+        throw new Error(err.detail || "Upload failed")
+      }
+      return res.json()
+    })
+  },
+
   getMessages: (userId: number, token: string) =>
     request(`/chat/messages/${userId}`, { headers: { Authorization: `Bearer ${token}` } }),
 
   getConversations: (token: string) =>
     request("/chat/conversations", { headers: { Authorization: `Bearer ${token}` } }),
+
+  deleteMessage: (messageId: number, token: string) =>
+    request(`/chat/message/${messageId}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    }),
 
   deletePost: (postId: number, token: string) =>
     request(`/user/post/${postId}`, {
@@ -166,11 +189,11 @@ export const api = {
   adminLogin: (data: { username: string; password: string }) =>
     request("/admin/login", { method: "POST", body: JSON.stringify(data) }),
 
-  adminUsers: (token: string) =>
-    request("/admin/users", { headers: { Authorization: `Bearer ${token}` } }),
+  adminUsers: (token: string, search?: string) =>
+    request(`/admin/users${search ? `?search=${encodeURIComponent(search)}` : ""}`, { headers: { Authorization: `Bearer ${token}` } }),
 
-  adminPosts: (token: string) =>
-    request("/admin/posts", { headers: { Authorization: `Bearer ${token}` } }),
+  adminPosts: (token: string, search?: string) =>
+    request(`/admin/posts${search ? `?search=${encodeURIComponent(search)}` : ""}`, { headers: { Authorization: `Bearer ${token}` } }),
 
   adminUpdateUser: (userId: number, data: { username?: string; email?: string; account_status?: string; bio?: string }, token: string) =>
     request(`/admin/users/${userId}`, {

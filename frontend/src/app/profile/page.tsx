@@ -6,6 +6,7 @@ import Link from "next/link"
 import { api, getImageUrl } from "@/lib/api"
 import { useAuth } from "@/context/AuthContext"
 import Navbar from "@/components/Navbar"
+import { AutoPlayVideo } from "@/components/PostMedia"
 
 type Profile = {
   id: number
@@ -162,7 +163,6 @@ export default function MyProfile() {
       <Navbar>
         <Link href="/">Home</Link>
         <Link href="/create-post">Create</Link>
-        <Link href="/chat">Chat</Link>
       </Navbar>
 
       <main className="max-w-xl mx-auto px-4 py-8">
@@ -237,7 +237,7 @@ export default function MyProfile() {
             <div key={post.id} className="relative group aspect-square bg-gray-100 overflow-hidden">
               <Link href={`/post/${post.id}`}>
                 {post.media_type === "video" ? (
-                  <video src={getImageUrl(post.image_url)} className="w-full h-full object-cover" />
+                  <AutoPlayVideo src={post.image_url} className="w-full h-full object-cover" />
                 ) : (
                   <img src={getImageUrl(post.image_url)} alt={post.title} className="w-full h-full object-cover" />
                 )}

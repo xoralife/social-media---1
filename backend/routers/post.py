@@ -190,13 +190,24 @@ def get_liked_posts(db: Session = Depends(get_db_session), current_user: User = 
 @router.post("/comment", response_model=CommentResponse, status_code=201)
 def comment_post(comment_data: CommentCreate, db: Session = Depends(get_db_session), current_user: User = Depends(get_current_user)):
     return PostService.comment_on_post(db, comment_data, current_user.id)
-
 @router.get("/{post_id}/comments", response_model=list[CommentResponse])
 def get_comments(post_id: int, db: Session = Depends(get_db_session), current_user: User = Depends(get_current_user)):
     post = db.query(Post).filter(Post.id == post_id).first()
     if not post:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Post not found")
-    return db.query(Comment).filter(Comment.post_id == post_id).order_by(Comment.id.desc()).all()
+    comments = db.query(Comment).filter(Comment.post_id == post_id).order_by(Comment.id.asc()).all()
+    result = []
+    for c in comments:
+        result.append(CommentResponse(
+            id=c.id,
+            user_id=c.user_id,
+            post_id=c.post_id,
+            comment=c.comment,
+            parent_id=c.parent_id,
+            username=c.user.username if c.user else None,
+            profile_pic=c.user.profile_pic if c.user else None,
+        ))
+    return result
 
 @router.delete("/{post_id}")
 def delete_post(post_id: int, db: Session = Depends(get_db_session), current_user: User = Depends(get_current_user)):

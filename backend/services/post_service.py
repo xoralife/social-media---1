@@ -3,8 +3,9 @@ from fastapi import HTTPException, status
 from models.post import Post
 from models.like import Like
 from models.comment import Comment
+from models.user import User
 from schemas.post import PostCreate
-from schemas.comment import CommentCreate
+from schemas.comment import CommentCreate, CommentResponse
 
 class PostService:
     @staticmethod
@@ -31,11 +32,29 @@ class PostService:
         return db_like
 
     @staticmethod
-    def comment_on_post(db: Session, comment_data: CommentCreate, user_id: int) -> Comment:
+    def comment_on_post(db: Session, comment_data: CommentCreate, user_id: int) -> CommentResponse:
         if not db.query(Post).filter(Post.id == comment_data.post_id).first():
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Post not found")
-        db_comment = Comment(user_id=user_id, post_id=comment_data.post_id, comment=comment_data.comment)
+        if comment_data.parent_id is not None:
+            parent = db.query(Comment).filter(Comment.id == comment_data.parent_id, Comment.post_id == comment_data.post_id).first()
+            if not parent:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Parent comment not found")
+        db_comment = Comment(
+            user_id=user_id,
+            post_id=comment_data.post_id,
+            comment=comment_data.comment,
+            parent_id=comment_data.parent_id,
+        )
         db.add(db_comment)
         db.commit()
         db.refresh(db_comment)
-        return db_comment
+        user = db.query(User).filter(User.id == user_id).first()
+        return CommentResponse(
+            id=db_comment.id,
+            user_id=db_comment.user_id,
+            post_id=db_comment.post_id,
+            comment=db_comment.comment,
+            parent_id=db_comment.parent_id,
+            username=user.username if user else None,
+            profile_pic=user.profile_pic if user else None,
+        )

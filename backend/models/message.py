@@ -9,7 +9,9 @@ class Message(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     sender_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     receiver_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    content = Column(Text, nullable=False)
+    content = Column(Text, nullable=True)
+    media_type = Column(Text, nullable=True)
+    media_url = Column(Text, nullable=True)
     created_at = Column(DateTime, server_default=func.now())
     is_read = Column(Boolean, default=False)
 

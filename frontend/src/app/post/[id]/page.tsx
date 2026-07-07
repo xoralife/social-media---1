@@ -27,6 +27,9 @@ type Comment = {
   user_id: number
   post_id: number
   comment: string
+  parent_id?: number | null
+  username?: string | null
+  profile_pic?: string | null
 }
 
 export default function PostDetail() {
@@ -36,6 +39,7 @@ export default function PostDetail() {
   const [post, setPost] = useState<Post | null>(null)
   const [comments, setComments] = useState<Comment[]>([])
   const [commentInput, setCommentInput] = useState("")
+  const [replyTo, setReplyTo] = useState<Comment | null>(null)
   const [error, setError] = useState("")
 
   useEffect(() => {
@@ -76,8 +80,12 @@ export default function PostDetail() {
   const handleComment = async () => {
     if (!token || !post || !commentInput.trim()) return
     try {
-      await api.comment({ post_id: post.id, comment: commentInput }, token)
+      await api.comment(
+        { post_id: post.id, comment: commentInput, parent_id: replyTo?.id },
+        token
+      )
       setCommentInput("")
+      setReplyTo(null)
       const data = await api.getComments(post.id, token)
       setComments(data)
       setPost(prev => prev ? { ...prev, comment_count: prev.comment_count + 1 } : prev)
@@ -99,6 +107,9 @@ export default function PostDetail() {
   )
 
   if (!post) return null
+
+  const topLevel = comments.filter(c => !c.parent_id)
+  const repliesOf = (id: number) => comments.filter(c => c.parent_id === id)
 
   return (
     <div className="min-h-screen bg-surface">
@@ -124,9 +135,9 @@ export default function PostDetail() {
             )}
           </div>
           {post.media_type === "video" ? (
-            <video src={getImageUrl(post.image_url)} className="w-full aspect-square object-cover" controls />
+            <video src={getImageUrl(post.image_url)} className="w-full max-h-[600px] object-contain bg-black" controls autoPlay loop muted playsInline />
           ) : (
-            <img src={getImageUrl(post.image_url)} alt={post.title} className="w-full aspect-square object-cover" />
+            <img src={getImageUrl(post.image_url)} alt={post.title} className="w-full max-h-[600px] object-contain bg-gray-50 mx-auto" />
           )}
           <div className="px-4 py-3 space-y-2">
             <div className="flex items-center gap-4">
@@ -143,15 +154,64 @@ export default function PostDetail() {
               <Link href={`/profile/${post.user_id}`} className="font-semibold mr-1">{post.username}</Link>
               {post.caption || post.title}
             </p>
-            <div className="pt-2 border-t border-border space-y-2">
-              {comments.map(c => (
-                <p key={c.id} className="text-sm">
-                  <span className="font-semibold">User #{c.user_id}</span> {c.comment}
-                </p>
+            <div className="pt-2 border-t border-border space-y-3">
+              {topLevel.map(c => (
+                <div key={c.id} className="space-y-1.5">
+                  <div className="flex items-start gap-2">
+                    {c.profile_pic ? (
+                      <img src={getImageUrl(c.profile_pic)} alt="" className="w-6 h-6 rounded-full object-cover shrink-0" />
+                    ) : (
+                      <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-[10px] font-semibold shrink-0">
+                        {(c.username || "U").charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <span className="text-sm font-semibold mr-1.5">
+                        <Link href={`/profile/${c.user_id}`}>{c.username || `User #${c.user_id}`}</Link>
+                      </span>
+                      <span className="text-sm">{c.comment}</span>
+                      <button
+                        onClick={() => setReplyTo(c)}
+                        className="text-xs text-gray-400 hover:text-gray-600 ml-2"
+                      >
+                        Reply
+                      </button>
+                    </div>
+                  </div>
+                  {repliesOf(c.id).map(r => (
+                    <div key={r.id} className="flex items-start gap-2 pl-8">
+                      {r.profile_pic ? (
+                        <img src={getImageUrl(r.profile_pic)} alt="" className="w-6 h-6 rounded-full object-cover shrink-0" />
+                      ) : (
+                        <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-[10px] font-semibold shrink-0">
+                          {(r.username || "U").charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <span className="text-sm font-semibold mr-1.5">
+                          <Link href={`/profile/${r.user_id}`}>{r.username || `User #${r.user_id}`}</Link>
+                        </span>
+                        <span className="text-sm">{r.comment}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               ))}
+              {replyTo && (
+                <div className="flex items-center gap-2 text-xs text-gray-500 pl-2">
+                  <span>Replying to <strong>{replyTo.username || `User #${replyTo.user_id}`}</strong></span>
+                  <button onClick={() => setReplyTo(null)} className="text-gray-400 hover:text-gray-600">Cancel</button>
+                </div>
+              )}
               <div className="flex gap-2 pt-1">
-                <input value={commentInput} onChange={e => setCommentInput(e.target.value)} placeholder="Add a comment..."
-                  className="flex-1 text-sm outline-none" onKeyDown={e => { if (e.key === "Enter") handleComment() }} />
+                <input
+                  value={commentInput}
+                  onChange={e => setCommentInput(e.target.value)}
+                  placeholder={replyTo ? `Reply to ${replyTo.username || "user"}...` : "Add a comment..."}
+                  className="flex-1 text-sm outline-none"
+                  onKeyDown={e => { if (e.key === "Enter") handleComment() }}
+                  autoFocus
+                />
                 <button onClick={handleComment} className="text-sm font-semibold text-accent hover:text-blue-600">Post</button>
               </div>
             </div>

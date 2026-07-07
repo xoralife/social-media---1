@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { api } from "@/lib/api"
@@ -29,18 +29,26 @@ export default function AdminDashboard() {
   const [editStatus, setEditStatus] = useState("")
   const [editBio, setEditBio] = useState("")
   const [editLoading, setEditLoading] = useState(false)
+  const [search, setSearch] = useState("")
+  const searchTimeout = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
 
   const token = typeof window !== "undefined" ? localStorage.getItem("admin_token") : null
 
-  const fetchData = () => {
+  const fetchData = (term?: string) => {
     if (!token) return
     Promise.all([
-      api.adminUsers(token),
-      api.adminPosts(token),
+      api.adminUsers(token, term),
+      api.adminPosts(token, term),
       api.adminAnalytics(token),
     ])
       .then(([u, p, a]) => { setUsers(u); setPosts(p); setAnalytics(a) })
       .catch(() => router.push("/admin/login"))
+  }
+
+  const handleSearch = (value: string) => {
+    setSearch(value)
+    clearTimeout(searchTimeout.current)
+    searchTimeout.current = setTimeout(() => fetchData(value || undefined), 300)
   }
 
   useEffect(() => {
@@ -111,7 +119,19 @@ export default function AdminDashboard() {
       </header>
 
       <main className="max-w-4xl mx-auto px-4 py-8">
-        <h2 className="text-xl font-bold mb-6">Admin Dashboard</h2>
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-bold">Admin Dashboard</h2>
+          <div className="relative w-72">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" placeholder="Search users & posts..." value={search} onChange={e => handleSearch(e.target.value)}
+              className="w-full pl-9 pr-8 py-2 border border-border rounded-lg text-sm outline-none focus:border-gray-400 bg-white" />
+            {search && (
+              <button onClick={() => handleSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            )}
+          </div>
+        </div>
 
         <div className="flex gap-2 mb-6">
           <button onClick={() => setTab("users")}
@@ -135,42 +155,48 @@ export default function AdminDashboard() {
         </div>
 
         {tab === "users" && (
-          <div className="border border-border rounded-lg overflow-hidden">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border bg-gray-50">
-                  <th className="text-left px-4 py-3 font-medium">ID</th>
-                  <th className="text-left px-4 py-3 font-medium">Username</th>
-                  <th className="text-left px-4 py-3 font-medium">Email</th>
-                  <th className="text-left px-4 py-3 font-medium">Status</th>
-                  <th className="text-right px-4 py-3 font-medium">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {users.map(u => (
-                  <tr key={u.id} className="border-b border-border hover:bg-gray-50">
-                    <td className="px-4 py-3">{u.id}</td>
-                    <td className="px-4 py-3 font-medium">{u.username}</td>
-                    <td className="px-4 py-3 text-gray-500">{u.email}</td>
-                    <td className="px-4 py-3">
-                      {u.account_status ? (
-                        <span className="text-xs font-semibold px-2 py-0.5 rounded"
-                          style={{
-                            backgroundColor: u.account_status === "Account Band" ? "var(--color-status-band-bg)" : u.account_status === "Restricted" ? "var(--color-status-restricted-bg)" : "var(--color-status-warning-bg)",
-                            color: u.account_status === "Account Band" ? "var(--color-status-band-text)" : u.account_status === "Restricted" ? "var(--color-status-restricted-text)" : "var(--color-status-warning-text)"
-                          }}>
-                          {u.account_status}
-                        </span>
-                      ) : "-"}
-                    </td>
-                    <td className="px-4 py-3 text-right space-x-2">
-                      <button onClick={() => openEdit(u)} className="text-blue-600 hover:underline text-xs">Edit</button>
-                      <button onClick={() => handleDeleteUser(u.id)} className="text-red-500 hover:underline text-xs">Delete</button>
-                    </td>
+          <div>
+            {users.length === 0 && search ? (
+              <p className="text-gray-400 text-center py-8 text-sm">No users matching &quot;{search}&quot;</p>
+            ) : (
+            <div className="border border-border rounded-lg overflow-hidden">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border bg-gray-50">
+                    <th className="text-left px-4 py-3 font-medium">ID</th>
+                    <th className="text-left px-4 py-3 font-medium">Username</th>
+                    <th className="text-left px-4 py-3 font-medium">Email</th>
+                    <th className="text-left px-4 py-3 font-medium">Status</th>
+                    <th className="text-right px-4 py-3 font-medium">Action</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {users.map(u => (
+                    <tr key={u.id} className="border-b border-border hover:bg-gray-50">
+                      <td className="px-4 py-3">{u.id}</td>
+                      <td className="px-4 py-3 font-medium">{u.username}</td>
+                      <td className="px-4 py-3 text-gray-500">{u.email}</td>
+                      <td className="px-4 py-3">
+                        {u.account_status ? (
+                          <span className="text-xs font-semibold px-2 py-0.5 rounded"
+                            style={{
+                              backgroundColor: u.account_status === "Account Band" ? "var(--color-status-band-bg)" : u.account_status === "Restricted" ? "var(--color-status-restricted-bg)" : "var(--color-status-warning-bg)",
+                              color: u.account_status === "Account Band" ? "var(--color-status-band-text)" : u.account_status === "Restricted" ? "var(--color-status-restricted-text)" : "var(--color-status-warning-text)"
+                            }}>
+                            {u.account_status}
+                          </span>
+                        ) : "-"}
+                      </td>
+                      <td className="px-4 py-3 text-right space-x-2">
+                        <button onClick={() => openEdit(u)} className="text-blue-600 hover:underline text-xs">Edit</button>
+                        <button onClick={() => handleDeleteUser(u.id)} className="text-red-500 hover:underline text-xs">Delete</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            )}
           </div>
         )}
 
@@ -189,7 +215,8 @@ export default function AdminDashboard() {
                 </div>
               </div>
             ))}
-            {posts.length === 0 && <p className="text-gray-400 text-center py-8 text-sm">No posts yet.</p>}
+            {posts.length === 0 && !search && <p className="text-gray-400 text-center py-8 text-sm">No posts yet.</p>}
+            {posts.length === 0 && search && <p className="text-gray-400 text-center py-8 text-sm">No posts matching &quot;{search}&quot;</p>}
           </div>
         )}
 
@@ -197,60 +224,81 @@ export default function AdminDashboard() {
           <div className="space-y-6">
             <div className="grid grid-cols-5 gap-4">
               {[
-                { label: "Users", value: analytics.total_users, color: "from-blue-500/90 to-blue-600", icon: "👥", sub: "Registered accounts" },
-                { label: "Posts", value: analytics.total_posts, color: "from-violet-500/90 to-violet-600", icon: "📸", sub: "Total shared" },
-                { label: "Likes", value: analytics.total_likes, color: "from-rose-500/90 to-rose-600", icon: "❤️", sub: "Total reactions" },
-                { label: "Comments", value: analytics.total_comments, color: "from-emerald-500/90 to-emerald-600", icon: "💬", sub: "Total discussions" },
-                { label: "Follows", value: analytics.total_follows, color: "from-amber-500/90 to-amber-600", icon: "🔗", sub: "Total connections" },
-              ].map((card, i) => (
-                <div key={card.label} className="group relative overflow-hidden rounded-2xl bg-gradient-to-br shadow-lg transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5" style={{ backgroundColor: card.color }}>
-                  <div className={`absolute inset-0 bg-gradient-to-br ${card.color} opacity-100`} />
-                  <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                  <div className="relative p-5 text-white">
-                    <p className="text-3xl font-bold tracking-tight">{card.value.toLocaleString()}</p>
-                    <p className="text-xs font-medium text-white/70 mt-1.5">{card.icon} {card.label}</p>
-                    <p className="text-[10px] text-white/50 mt-0.5">{card.sub}</p>
+                { label: "Users", value: analytics.total_users, gradient: "from-violet-500 to-purple-600", bg: "bg-violet-50", iconColor: "text-violet-600", sub: "Registered accounts" },
+                { label: "Posts", value: analytics.total_posts, gradient: "from-blue-500 to-cyan-500", bg: "bg-blue-50", iconColor: "text-blue-600", sub: "Total shared" },
+                { label: "Likes", value: analytics.total_likes, gradient: "from-rose-500 to-pink-500", bg: "bg-rose-50", iconColor: "text-rose-600", sub: "Total reactions" },
+                { label: "Comments", value: analytics.total_comments, gradient: "from-emerald-500 to-teal-500", bg: "bg-emerald-50", iconColor: "text-emerald-600", sub: "Total discussions" },
+                { label: "Follows", value: analytics.total_follows, gradient: "from-amber-500 to-orange-500", bg: "bg-amber-50", iconColor: "text-amber-600", sub: "Total connections" },
+              ].map((card) => (
+                <div key={card.label} className="group relative overflow-hidden rounded-2xl bg-white dark:bg-gray-800/80 border border-gray-100 dark:border-gray-700/50 p-5 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+                  <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${card.gradient}`} />
+                  <div className="flex items-center justify-between mb-4">
+                    <div className={`w-10 h-10 rounded-xl ${card.bg} dark:bg-opacity-20 flex items-center justify-center ${card.iconColor} dark:brightness-150`}>
+                      {card.label === "Users" ? (
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                      ) : card.label === "Posts" ? (
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                      ) : card.label === "Likes" ? (
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                      ) : card.label === "Comments" ? (
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                      ) : (
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><polyline points="17 8 21 12 17 16"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                      )}
+                    </div>
                   </div>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{card.value.toLocaleString()}</p>
+                  <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mt-1">{card.label}</p>
+                  <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">{card.sub}</p>
                 </div>
               ))}
             </div>
 
             <div className="grid grid-cols-2 gap-5">
-              <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition-shadow duration-300 hover:shadow-md">
+              <div className="rounded-2xl border border-gray-100 dark:border-gray-700/50 bg-white dark:bg-gray-800/80 p-6 shadow-sm hover:shadow-lg transition-all duration-300">
                 <div className="flex items-center justify-between mb-5">
-                  <h3 className="text-sm font-semibold text-gray-800">User Status</h3>
-                  <span className="text-[10px] font-medium text-gray-400 bg-gray-50 px-2 py-1 rounded-full">Distribution</span>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-indigo-500" />
+                    <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200">User Status</h3>
+                  </div>
+                  <span className="text-[10px] font-medium text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-gray-700/50 px-2.5 py-1 rounded-full">Distribution</span>
                 </div>
                 <div className="flex items-center gap-6">
-                  <div className="shrink-0">
+                  <div className="shrink-0 relative">
                     <ResponsiveContainer width={180} height={180}>
                       <PieChart>
                         <Pie data={Object.entries(analytics.user_status_breakdown).map(([name, value]) => ({ name, value }))} cx="50%" cy="50%" innerRadius={50} outerRadius={78} dataKey="value" paddingAngle={4} strokeWidth={0}>
                           {Object.entries(analytics.user_status_breakdown).map(([name], i) => {
-                            const colors = ["#3b82f6", "#f59e0b", "#ef4444", "#8b5cf6"]
-                            return <Cell key={name} fill={colors[i % 4]} />
+                            const colors = ["#6366f1", "#8b5cf6", "#14b8a6", "#f59e0b"]
+                            return <Cell key={name} fill={colors[i % colors.length]} />
                           })}
                         </Pie>
-                        <Tooltip contentStyle={{ borderRadius: 12, border: "none", boxShadow: "0 4px 20px rgba(0,0,0,0.1)" }} />
+                        <Tooltip contentStyle={{ borderRadius: 12, border: "none", boxShadow: "0 4px 20px rgba(0,0,0,0.1)", fontSize: 12 }} />
                       </PieChart>
                     </ResponsiveContainer>
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <div className="text-center">
+                        <p className="text-lg font-bold text-gray-900 dark:text-white">{Object.values(analytics.user_status_breakdown).reduce((a, b) => a + b, 0)}</p>
+                        <p className="text-[10px] text-gray-400 dark:text-gray-500 -mt-0.5">Total</p>
+                      </div>
+                    </div>
                   </div>
                   <div className="flex-1 space-y-2.5">
                     {Object.entries(analytics.user_status_breakdown).map(([name, value], i) => {
-                      const colors = ["#3b82f6", "#f59e0b", "#ef4444", "#8b5cf6"]
+                      const colors = ["#6366f1", "#8b5cf6", "#14b8a6", "#f59e0b"]
                       const total = Object.values(analytics.user_status_breakdown).reduce((a, b) => a + b, 0)
                       const pct = total > 0 ? Math.round((value / total) * 100) : 0
                       return (
                         <div key={name}>
                           <div className="flex items-center justify-between text-xs mb-1">
                             <div className="flex items-center gap-1.5">
-                              <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: colors[i % 4] }} />
-                              <span className="text-gray-600 font-medium">{name}</span>
+                              <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: colors[i % colors.length] }} />
+                              <span className="text-gray-600 dark:text-gray-300 font-medium">{name}</span>
                             </div>
-                            <span className="font-semibold text-gray-800">{value} ({pct}%)</span>
+                            <span className="font-semibold text-gray-800 dark:text-gray-100">{value} ({pct}%)</span>
                           </div>
-                          <div className="h-1.5 rounded-full bg-gray-100 overflow-hidden">
-                            <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, backgroundColor: colors[i % 4] }} />
+                          <div className="h-1.5 rounded-full bg-gray-100 dark:bg-gray-700 overflow-hidden">
+                            <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, backgroundColor: colors[i % colors.length] }} />
                           </div>
                         </div>
                       )
@@ -259,32 +307,38 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition-shadow duration-300 hover:shadow-md">
+              <div className="rounded-2xl border border-gray-100 dark:border-gray-700/50 bg-white dark:bg-gray-800/80 p-6 shadow-sm hover:shadow-lg transition-all duration-300">
                 <div className="flex items-center justify-between mb-5">
-                  <h3 className="text-sm font-semibold text-gray-800">Top Followed</h3>
-                  <span className="text-[10px] font-medium text-gray-400 bg-gray-50 px-2 py-1 rounded-full">Users</span>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-indigo-500" />
+                    <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200">Top Followed</h3>
+                  </div>
+                  <span className="text-[10px] font-medium text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-gray-700/50 px-2.5 py-1 rounded-full">Users</span>
                 </div>
                 <ResponsiveContainer width="100%" height={200}>
                   <BarChart data={analytics.most_followed_users.map(u => ({ name: u.username, followers: u.followers }))} layout="vertical" margin={{ left: 0, right: 0, top: 0, bottom: 0 }}>
                     <defs>
                       <linearGradient id="followGrad" x1="0" y1="0" x2="1" y2="0">
-                        <stop offset="0%" stopColor="#8b5cf6" />
-                        <stop offset="100%" stopColor="#a78bfa" />
+                        <stop offset="0%" stopColor="#6366f1" />
+                        <stop offset="100%" stopColor="#818cf8" />
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
                     <XAxis type="number" tick={{ fontSize: 11, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
-                    <YAxis type="category" dataKey="name" tick={{ fontSize: 12, fill: "#475569", fontWeight: 500 }} width={80} axisLine={false} tickLine={false} />
-                    <Tooltip contentStyle={{ borderRadius: 12, border: "none", boxShadow: "0 4px 20px rgba(0,0,0,0.1)" }} cursor={{ fill: "rgba(139,92,246,0.05)" }} />
+                    <YAxis type="category" dataKey="name" tick={{ fontSize: 12, fill: "#64748b", fontWeight: 500 }} width={80} axisLine={false} tickLine={false} />
+                    <Tooltip contentStyle={{ borderRadius: 12, border: "none", boxShadow: "0 4px 20px rgba(0,0,0,0.1)", fontSize: 12 }} cursor={{ fill: "rgba(99,102,241,0.05)" }} formatter={(value) => [value, "Followers"]} />
                     <Bar dataKey="followers" fill="url(#followGrad)" radius={[0, 6, 6, 0]} barSize={18} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
 
-              <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition-shadow duration-300 hover:shadow-md">
+              <div className="rounded-2xl border border-gray-100 dark:border-gray-700/50 bg-white dark:bg-gray-800/80 p-6 shadow-sm hover:shadow-lg transition-all duration-300">
                 <div className="flex items-center justify-between mb-5">
-                  <h3 className="text-sm font-semibold text-gray-800">Top Liked</h3>
-                  <span className="text-[10px] font-medium text-gray-400 bg-gray-50 px-2 py-1 rounded-full">Posts</span>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-rose-500" />
+                    <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200">Top Liked</h3>
+                  </div>
+                  <span className="text-[10px] font-medium text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-gray-700/50 px-2.5 py-1 rounded-full">Posts</span>
                 </div>
                 <ResponsiveContainer width="100%" height={200}>
                   <BarChart data={analytics.top_liked_posts.map(p => ({ name: p.title.length > 16 ? p.title.slice(0, 16) + "…" : p.title, likes: p.likes }))} layout="vertical" margin={{ left: 0, right: 0, top: 0, bottom: 0 }}>
@@ -296,17 +350,20 @@ export default function AdminDashboard() {
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
                     <XAxis type="number" tick={{ fontSize: 11, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
-                    <YAxis type="category" dataKey="name" tick={{ fontSize: 12, fill: "#475569", fontWeight: 500 }} width={100} axisLine={false} tickLine={false} />
-                    <Tooltip contentStyle={{ borderRadius: 12, border: "none", boxShadow: "0 4px 20px rgba(0,0,0,0.1)" }} cursor={{ fill: "rgba(236,72,153,0.05)" }} />
+                    <YAxis type="category" dataKey="name" tick={{ fontSize: 12, fill: "#64748b", fontWeight: 500 }} width={100} axisLine={false} tickLine={false} />
+                    <Tooltip contentStyle={{ borderRadius: 12, border: "none", boxShadow: "0 4px 20px rgba(0,0,0,0.1)", fontSize: 12 }} cursor={{ fill: "rgba(236,72,153,0.05)" }} formatter={(value) => [value, "Likes"]} />
                     <Bar dataKey="likes" fill="url(#likeGrad)" radius={[0, 6, 6, 0]} barSize={18} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
 
-              <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition-shadow duration-300 hover:shadow-md">
+              <div className="rounded-2xl border border-gray-100 dark:border-gray-700/50 bg-white dark:bg-gray-800/80 p-6 shadow-sm hover:shadow-lg transition-all duration-300">
                 <div className="flex items-center justify-between mb-5">
-                  <h3 className="text-sm font-semibold text-gray-800">Top Commented</h3>
-                  <span className="text-[10px] font-medium text-gray-400 bg-gray-50 px-2 py-1 rounded-full">Posts</span>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                    <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200">Top Commented</h3>
+                  </div>
+                  <span className="text-[10px] font-medium text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-gray-700/50 px-2.5 py-1 rounded-full">Posts</span>
                 </div>
                 <ResponsiveContainer width="100%" height={200}>
                   <BarChart data={analytics.top_commented_posts.map(p => ({ name: p.title.length > 16 ? p.title.slice(0, 16) + "…" : p.title, comments: p.comments }))} layout="vertical" margin={{ left: 0, right: 0, top: 0, bottom: 0 }}>
@@ -318,8 +375,8 @@ export default function AdminDashboard() {
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
                     <XAxis type="number" tick={{ fontSize: 11, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
-                    <YAxis type="category" dataKey="name" tick={{ fontSize: 12, fill: "#475569", fontWeight: 500 }} width={100} axisLine={false} tickLine={false} />
-                    <Tooltip contentStyle={{ borderRadius: 12, border: "none", boxShadow: "0 4px 20px rgba(0,0,0,0.1)" }} cursor={{ fill: "rgba(16,185,129,0.05)" }} />
+                    <YAxis type="category" dataKey="name" tick={{ fontSize: 12, fill: "#64748b", fontWeight: 500 }} width={100} axisLine={false} tickLine={false} />
+                    <Tooltip contentStyle={{ borderRadius: 12, border: "none", boxShadow: "0 4px 20px rgba(0,0,0,0.1)", fontSize: 12 }} cursor={{ fill: "rgba(16,185,129,0.05)" }} formatter={(value) => [value, "Comments"]} />
                     <Bar dataKey="comments" fill="url(#commentGrad)" radius={[0, 6, 6, 0]} barSize={18} />
                   </BarChart>
                 </ResponsiveContainer>

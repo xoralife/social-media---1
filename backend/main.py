@@ -26,6 +26,23 @@ async def lifespan(app: FastAPI):
     if "favorites" not in inspector.get_table_names():
         Base.metadata.create_all(bind=engine)
         print("Migration: created favorites table")
+    comment_columns = [c["name"] for c in inspector.get_columns("comments")]
+    if "parent_id" not in comment_columns:
+        with engine.connect() as conn:
+            conn.execute(text("ALTER TABLE comments ADD COLUMN parent_id INTEGER REFERENCES comments(id) ON DELETE CASCADE"))
+            conn.commit()
+        print("Migration: added parent_id column to comments table")
+    message_columns = [c["name"] for c in inspector.get_columns("messages")]
+    if "media_type" not in message_columns:
+        with engine.connect() as conn:
+            conn.execute(text("ALTER TABLE messages ADD COLUMN media_type TEXT"))
+            conn.commit()
+        print("Migration: added media_type column to messages table")
+    if "media_url" not in message_columns:
+        with engine.connect() as conn:
+            conn.execute(text("ALTER TABLE messages ADD COLUMN media_url TEXT"))
+            conn.commit()
+        print("Migration: added media_url column to messages table")
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()
     try:
